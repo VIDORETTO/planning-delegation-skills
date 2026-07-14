@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spec-Driven Project Planner"
+  short_description: "Create implementation-ready project plans"
+  default_prompt: "Use $create-spec-driven-plan to turn this project context into a phased, implementation-ready specification."

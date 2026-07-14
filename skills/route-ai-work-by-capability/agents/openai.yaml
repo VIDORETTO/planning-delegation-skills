@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cost-Aware AI Work Router"
+  short_description: "Route tasks by model capability and cost"
+  default_prompt: "Use $route-ai-work-by-capability to classify this plan and assign each task to the right AI tier."
