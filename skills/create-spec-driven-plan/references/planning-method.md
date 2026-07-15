@@ -1,5 +1,13 @@
 # Planning method
 
+This method implements workflow contract `planning-delegation/v2`. Planning consumes a validated brainstorm handoff and produces a validated routing handoff. It never performs either adjacent stage.
+
+## Stage contract
+
+Entry requires `BRAINSTORM_READY`, `next_skill: create-spec-driven-plan`, `handoff_status: READY`, and matching brainstorm revisions in `PROGRESS.md` and `BRAINSTORM-TO-PLAN.md`. Planning owns `PLAN_IN_PROGRESS` and `PLAN_VALIDATED` only. Exit requires a validated `PLAN-TO-ROUTING.md`, synchronized revisions and `next_skill: route-ai-work-by-capability`; then stop.
+
+`PROGRESS.md` is the only operational pointer. `AGENTS.md` is an index, the handoff is the stage input contract, and subject documents own their detailed domains.
+
 ## Contents
 
 1. Planning target
@@ -34,7 +42,7 @@ Build a source matrix before designing:
 
 | Source | Authority | Extract |
 |---|---|---|
-| latest user request | highest | required outcomes and constraints |
+| explicit user decisions | highest for product intent | required outcomes and constraints, subject to recorded change control |
 | user-provided files | high | domain facts and accepted decisions |
 | repository | high for current state | code, stack, conventions and debt |
 | existing plan | medium | intent, status and assumptions |
@@ -169,32 +177,41 @@ Use ADRs for choices with material tradeoffs or migration cost.
 
 Recommended authority:
 
-1. latest user request;
-2. repository agent instructions;
-3. master;
-4. progress pointer and active task;
-5. contracts/security;
-6. architecture;
-7. roadmap;
-8. historical conversation.
+1. explicit user decisions with source and revision;
+2. `PROGRESS.md` for operational state;
+3. validated stage handoff;
+4. contracts/security for their subjects;
+5. active task and its context package;
+6. architecture and roadmap;
+7. historical conversation.
+
+A new user request does not silently overwrite a validated plan. Classify it through change control and record its source.
 
 Recommended files:
 
+- ../PROGRESS.md;
+- ../SOURCE-REGISTER.md;
+- ../CONTEXT-INDEX.md;
+- ../GLOSSARY.md;
 - 00-MASTER.md;
-- PROGRESS.md;
 - PRODUCT-SCOPE.md;
 - ANALYSIS.md;
+- USER-JOURNEYS.md;
+- BUSINESS-RULES.md;
 - ARCHITECTURE.md;
 - DOMAIN-DATA.md;
 - API-CONTRACTS.md;
 - SECURITY.md;
+- OPERATIONS.md;
 - QUALITY-EVALUATION.md;
 - ROADMAP.md;
 - TRACEABILITY.md;
 - DECISIONS-RISKS.md;
 - REFERENCES.md;
 - HISTORY.md;
-- phases/PHASE-ID.md.
+- phases/PHASE-ID.md;
+- task-context/TASK-ID.md for critical or extensive tasks;
+- ../handoffs/PLAN-TO-ROUTING.md.
 
 Use links rather than duplicating the same rule in many files. Duplicate only critical safety constraints and keep them mechanically auditable.
 
@@ -208,6 +225,8 @@ A good task has:
 - known dependencies;
 - a testable end state;
 - rollback or failure semantics when needed.
+
+It also records requirement and decision IDs, reviewer placeholder, priority/risk, mandatory reading, bounded write scope and non-scope, security/privacy, required evidence and escalation triggers. During planning the executor remains `UNASSIGNED`; routing owns assignment.
 
 Split when:
 
@@ -237,6 +256,8 @@ Evidence:
 ~~~
 
 Use stable IDs. Never recycle an ID for a different behavior.
+
+Preserve brainstorm identity across formalization: `CR-001` becomes a formal `REQ-001` while `TRACEABILITY.md` retains `CR-001` and its `SRC-*` source as origin.
 
 ## 9. Acceptance and evaluation
 
@@ -290,6 +311,14 @@ At task completion:
 
 At context loss, a fresh agent reads master, progress, active phase and referenced contracts.
 
+## 10.1 Change control
+
+- Small detail with no structural impact: update task and traceability, increment `plan_revision`, and invalidate/revise routing if affected.
+- Structural change such as schema, integration, actor or MVP: `REPLAN_REQUIRED`, next skill `create-spec-driven-plan`.
+- Change to audience, problem or primary product outcome: `REBRAINSTORM_REQUIRED`, next skill `brainstorm-idea-with-user`.
+
+Always record classification and rationale. Implementation does not silently expand scope.
+
 ## 11. Plan auditing
 
 Mechanical checks:
@@ -301,6 +330,13 @@ Mechanical checks:
 - executor exists if routed;
 - phase and route task sets match;
 - master/progress/phase links exist.
+- dependencies exist, are not self-referential and form an acyclic graph;
+- checkbox and state agree;
+- complete tasks contain evidence and blocked tasks contain a blocker;
+- every active requirement and task participates in traceability;
+- progress pointers name existing, ready tasks;
+- revisions match across progress and handoffs;
+- no placeholders remain in a validated plan.
 
 Semantic checks:
 

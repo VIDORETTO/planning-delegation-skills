@@ -1,0 +1,4 @@
+interface:
+  display_name: "Collaborative Product Brainstorm"
+  short_description: "Mature and document an idea before formal planning"
+  default_prompt: "Use $brainstorm-idea-with-user to explore this idea, preserve decisions, validate the brainstorm package, and prepare a handoff for a later separate invocation of $create-spec-driven-plan."

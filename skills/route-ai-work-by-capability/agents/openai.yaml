@@ -1,4 +1,4 @@
 interface:
-  display_name: "Cost-Aware AI Work Router"
-  short_description: "Route tasks by model capability and cost"
-  default_prompt: "Use $route-ai-work-by-capability to classify this plan and assign each task to the right AI tier."
+  display_name: "Validated AI Work Router"
+  short_description: "Route a validated plan and prepare implementation handoff"
+  default_prompt: "Use $route-ai-work-by-capability only when $create-spec-driven-plan has produced PLAN_VALIDATED. Register models, assign executor/reviewer and batches, validate routing, prepare the implementation handoff, update PROGRESS.md, and stop before implementation."

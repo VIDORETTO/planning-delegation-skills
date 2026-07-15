@@ -1,60 +1,187 @@
-# Brainstorm: <Nome curto do projeto/feature>
+---
+workflow_contract: planning-delegation/v2
+project_id: <project-id>
+project_slug: <project-slug>
+brainstorm_revision: 1
+state: BRAINSTORM_IN_PROGRESS
+updated_at: <ISO-8601-with-timezone>
+---
 
-> Status: `em andamento` | `pronto para virar spec` | `convertido em spec`
-> Última atualização: <YYYY-MM-DD>
-> Pasta: `docs/brainstorms/<slug>/`
+# Brainstorm: <Nome do projeto ou feature>
+
+## Identificação
+
+- Project ID: <project-id>
+- Nome: <nome>
+- Slug: <project-slug>
+- Tipo: novo produto | feature | automação | pesquisa
+- Responsável pela decisão: <pessoa ou papel>
+- Estado: BRAINSTORM_IN_PROGRESS
+- Revisão: 1
 
 ## Ideia original
 
-> Cole aqui a descrição do usuário o mais próximo possível do literal, na primeira sessão.
-> Não edite esta seção depois — ela é o "antes" de referência. Mudanças de escopo vão em
-> "Decisões" abaixo, não aqui.
+> <descrição original do usuário; não editar depois>
 
-<texto da ideia original>
+## Resumo atual
 
-## Resumo atual (1 parágrafo)
+<síntese consolidada em três a cinco linhas>
 
-Reescreva em 3-5 linhas o que o projeto é *hoje*, já incorporando as decisões tomadas até agora.
-Esta seção é a que qualquer IA deve ler primeiro para entender o estado atual sem ler o histórico
-inteiro.
+## Problema atual
 
-## Decisões tomadas
+- Quem possui o problema: <resposta>
+- Como funciona hoje: <resposta>
+- Onde ocorre a dor: <resposta>
+- Frequência: <resposta>
+- Impacto: <resposta>
+- Soluções improvisadas existentes: <resposta>
 
-Liste apenas decisões que já foram fechadas. Formato: decisão — motivo/contexto curto — quem
-decidiu (usuário/sugestão aceita).
+## Resultado desejado
 
-- <decisão 1> — <por quê> 
-- <decisão 2> — <por quê>
+- Mudança esperada: <resposta>
+- Resultado mínimo aceitável: <resposta>
+- Resultado ideal: <resposta>
+- Como o usuário perceberá valor: <resposta>
 
-## Sugestões feitas e não aceitas
+## Usuários e atores
 
-Registre também o que você sugeriu e o usuário optou por não seguir, para não sugerir de novo
-sem necessidade.
+| ID | Ator | Objetivo | Permissões | Dificuldades |
+|---|---|---|---|---|
+| ACT-001 | <ator> | <objetivo> | <permissões> | <dificuldades> |
 
-- <sugestão> → usuário preferiu <opção escolhida> porque <motivo, se souber>
+## Cenários e jornadas
 
-## Em aberto
+### JRN-001 — <Jornada principal>
 
-Perguntas ou decisões que ainda faltam, em ordem de prioridade (mais estrutural primeiro).
+- Gatilho: <gatilho>
+- Passos atuais: <passos>
+- Resultado esperado: <resultado>
+- Exceções: <exceções>
+- Falhas possíveis: <falhas>
 
-- [ ] <pergunta/decisão 1>
-- [ ] <pergunta/decisão 2>
+## Escopo
 
-## Riscos e suposições
+### Primeira entrega utilizável
 
-- <suposição feita que ainda não foi confirmada pelo usuário>
-- <risco técnico ou de produto identificado>
+<MVP>
+
+### Visão completa
+
+<visão>
+
+### Fora de escopo
+
+<não objetivos>
+
+### Futuro possível
+
+<possibilidades não comprometidas>
+
+## Capacidades desejadas
+
+| ID | Candidate requirement | Descrição | Prioridade | Evidência |
+|---|---|---|---|---|
+| CR-001 | <nome> | <descrição> | MUST | SRC-001 |
+
+## Regras de negócio conhecidas
+
+| ID | Regra | Origem | Confirmada |
+|---|---|---|---|
+| BR-001 | <regra> | SRC-001 | sim |
+
+## Dados
+
+- Dados de entrada: <resposta>
+- Dados produzidos: <resposta>
+- Fonte de verdade: <resposta>
+- Sensibilidade: <resposta>
+- Retenção: <resposta>
+- Exclusão: <resposta>
+- Volume esperado: <resposta>
+
+## Integrações externas
+
+| Integração | Motivo | Obrigatória | Riscos | Alternativa |
+|---|---|---|---|---|
+| <integração> | <motivo> | sim | <riscos> | <alternativa> |
+
+## Restrições
+
+- Stack: <resposta>
+- Hospedagem: <resposta>
+- Orçamento: <resposta>
+- Prazo: <resposta>
+- Ferramentas: <resposta>
+- Compatibilidade: <resposta>
+- Legais/regulatórias: <resposta>
+- Segurança e privacidade: <resposta>
+
+## Métricas e definição de sucesso
+
+| Métrica | Estado atual | Meta | Forma de medição |
+|---|---|---|---|
+| <métrica> | <baseline> | <meta> | <medição> |
+
+## Exemplos concretos
+
+- Exemplo de entrada: <exemplo>
+- Exemplo de saída: <exemplo>
+- Caso feliz: <exemplo>
+- Caso problemático: <exemplo>
+- Resultado proibido: <exemplo>
+
+## Glossário inicial
+
+| Termo | Significado no projeto |
+|---|---|
+| <termo> | <significado> |
+
+## Decisões
+
+| ID | Decisão | Alternativas | Motivo | Autoridade | Data | Estado |
+|---|---|---|---|---|---|---|
+| DEC-001 | <decisão> | <alternativas> | <motivo> | usuário | <YYYY-MM-DD> | CONFIRMED |
+
+## Suposições
+
+| ID | Suposição | Impacto se incorreta | Como validar | Estado |
+|---|---|---|---|---|
+| ASM-001 | <suposição> | <impacto> | <validação> | ACTIVE |
+
+## Questões em aberto
+
+| ID | Questão | Prioridade | Impacto | Responsável | Estado |
+|---|---|---|---|---|---|
+| Q-001 | <questão> | STRUCTURAL | <impacto> | <responsável> | OPEN |
+
+## Riscos
+
+| ID | Risco | Probabilidade | Impacto | Mitigação |
+|---|---|---|---|---|
+| RISK-001 | <risco> | média | alto | <mitigação> |
+
+## Sugestões recusadas
+
+| ID | Sugestão | Decisão do usuário | Motivo |
+|---|---|---|---|
+| REJ-001 | <sugestão> | <decisão> | <motivo> |
 
 ## Tópicos detalhados
 
-Só preencha se algum tema precisou de arquivo próprio (ver `references/organizacao-de-pasta.md`).
+- Nenhum.
 
-- `topicos/<tema>.md` — <resumo de 2-3 linhas do que está lá>
+## Prontidão para planejamento
+
+- [ ] Problema central claro
+- [ ] Usuários identificados
+- [ ] MVP definido
+- [ ] Não objetivos definidos
+- [ ] Restrições estruturais definidas
+- [ ] Integrações críticas definidas
+- [ ] Métricas principais definidas
+- [ ] Sem questão estrutural bloqueadora
+- [ ] Handoff gerado
 
 ## Últimas atualizações
 
-Mantenha só as últimas 3-5 entradas. Mais antigas: resuma dentro de "Decisões tomadas" e remova
-daqui.
-
-- <YYYY-MM-DD>: <o que mudou nesta sessão, 1-2 linhas>
-- <YYYY-MM-DD>: <o que mudou nesta sessão, 1-2 linhas>
+- <YYYY-MM-DD>: <mudança material resumida>

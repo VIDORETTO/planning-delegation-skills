@@ -1,192 +1,178 @@
 ---
 name: route-ai-work-by-capability
-description: Classify and route implementation tasks among AI models by capability, risk and cost, then create enforceable ownership, switching and handoff instructions. Use when a user has a phased plan/backlog and wants stronger models for architecture or critical work, cheaper/weaker models for mechanical implementation, model-specific task queues, an AGENTS.md routing protocol, or validation that every task has exactly one suitable executor.
+description: Route tasks from a validated spec-driven plan to registered AI models by capability, risk and total delivery cost. Produces auditable assignments, reviewers, batches, model-switch checkpoints and a validated implementation handoff. Use only after create-spec-driven-plan has produced PLAN_VALIDATED.
 ---
 
 # Route AI Work by Capability
 
-Minimize total expected delivery cost, not only inference price. A cheap model that causes architectural rework is expensive; a strong model used for repetitive wiring is wasteful.
+Route validated implementation tasks to the least expensive model that can deliver them with acceptable expected risk. This skill owns only the routing stage of `planning-delegation/v2`.
 
-## Load resources
+## Required resources
 
-- Read [references/classification-rubric.md](references/classification-rubric.md) before assigning tasks.
-- Adapt [assets/AGENTS.template.md](assets/AGENTS.template.md) and [assets/ROUTING.template.md](assets/ROUTING.template.md).
-- Run [scripts/validate_routing.py](scripts/validate_routing.py) after classification.
-- If tasks lack stable IDs, dependencies or acceptance criteria, use the create-spec-driven-plan skill first.
+Before routing:
+
+1. read [references/classification-rubric.md](references/classification-rubric.md);
+2. use [assets/ROUTING.template.md](assets/ROUTING.template.md);
+3. use [assets/MODEL-CAPABILITIES.template.md](assets/MODEL-CAPABILITIES.template.md);
+4. use [assets/MODEL-SWITCH-CHECKPOINT.template.md](assets/MODEL-SWITCH-CHECKPOINT.template.md);
+5. use [assets/ROUTING-TO-IMPLEMENTATION.template.md](assets/ROUTING-TO-IMPLEMENTATION.template.md);
+6. adapt [assets/AGENTS.template.md](assets/AGENTS.template.md) only as a discovery index;
+7. run [scripts/validate_routing.py](scripts/validate_routing.py).
+
+## Exclusive stage ownership
+
+Execute only routing. Do not invoke, execute or mix planning, brainstorm or implementation in the same operation.
+
+When finished:
+
+1. validate routing artifacts;
+2. generate `handoffs/ROUTING-TO-IMPLEMENTATION.md`;
+3. update `PROGRESS.md`;
+4. set `next_skill: implementation`;
+5. stop.
+
+If the current state belongs to another skill, do not modify its artifacts. Report the required skill and stop.
+
+## Input gate
+
+Start only when all conditions are true in the project workflow directory:
+
+~~~yaml
+workflow_contract: planning-delegation/v2
+stage: PLAN
+status: PLAN_VALIDATED
+active_skill: create-spec-driven-plan
+next_skill: route-ai-work-by-capability
+handoff_status: READY
+~~~
+
+Additionally require:
+
+- `handoffs/PLAN-TO-ROUTING.md` exists;
+- `plan/00-MASTER.md`, phase/task specifications and `plan/TRACEABILITY.md` exist;
+- handoff `plan_revision` equals `PROGRESS.md` `plan_revision`;
+- handoff `brainstorm_revision` equals `plan_based_on_brainstorm_revision`;
+- the dependency graph and plan validation result are valid;
+- every routable task has a stable ID, objective, dependencies, bounded write scope, tests, non-empty acceptance criteria and evidence contract;
+- no hidden architecture, schema or contract decision remains inside a mechanical task.
+
+If the plan is incomplete, do not repair requirements, architecture, contracts or task definitions and do not generate routing. Update only the workflow pointer:
+
+~~~yaml
+stage: PLAN
+status: REPLAN_REQUIRED
+active_skill: route-ai-work-by-capability
+next_skill: create-spec-driven-plan
+handoff_status: NOT_READY
+~~~
+
+Record precise validation failures and stop.
 
 ## Workflow
 
-### 1. Normalize model tiers
+### 1. Register models
 
-Map user-provided models to capability roles:
+Create `MODEL-CAPABILITIES.md`. Use stable model IDs and record real name/version, tier, assessment date, context, tools, vision/navigation capabilities, strengths, limitations, code and architecture quality, relative cost and review policy.
 
-- STRONG: best reasoning/reliability; higher cost.
-- ECONOMY: lower cost; follows explicit, narrow specs.
+Model capabilities are time-sensitive. Never route from brand prestige or an undated assumption. User-provided names remain visible, but task fields use registered Model IDs.
 
-Keep the user-facing names in output, for example GROK_4_5 and COMPOSER. Do not infer the active model; the user or persisted progress sets it.
+### 2. Classify tasks
 
-For more than two models, define ordered tiers and review boundaries before routing.
+Apply hard gates first. Architecture/public API, auth/security/privacy/tenancy, destructive migration, concurrency/idempotency/distributed state, critical financial/legal rules, ambiguous inference/parsing, durable workflows, production promotion and incident recovery require STRONG.
 
-### 2. Verify task readiness
+When no gate applies, score every rubric dimension. Record total, confidence and rationale. Include risk, reversibility, verification difficulty, blast radius, specification completeness and rework cost.
 
-Every routable task must have:
+Split mixed tasks only if the validated plan already authorizes the split. Otherwise return `REPLAN_REQUIRED`; routing must not silently create requirements, tasks or contracts.
 
-- stable ID;
-- one observable objective;
-- dependencies;
-- bounded scope;
-- tests/acceptance;
-- no hidden architectural decision.
+### 3. Assign executor and reviewer
 
-Split tasks that combine high-risk design and mechanical follow-up. Do not split silently after an executor starts; create new IDs and update traceability.
+Every task has exactly one executor. A reviewer is not a co-owner.
 
-### 3. Classify with hard gates
+Allowed review modes:
 
-Assign STRONG immediately when a task includes any hard gate:
+- `NONE`;
+- `SAMPLE`;
+- `REQUIRED_BEFORE_COMPLETE`;
+- `REQUIRED_BEFORE_RELEASE`;
+- `ADVERSARIAL_REVIEW`.
 
-- architecture or public contract;
-- security, authorization, privacy or tenant isolation;
-- schema migration/data loss risk;
-- concurrency, idempotency, distributed workflow or atomic publication;
-- novel/ambiguous algorithm or inference;
-- critical financial/legal/business association;
-- parser/OCR/layout reconciliation;
-- production rollback/DR;
-- evaluation threshold/promotion decision.
+Use a registered STRONG reviewer when risk, verification difficulty or policy requires it. Executor and reviewer must differ whenever review is required.
 
-Otherwise score the rubric. Route ECONOMY only when the task is explicit, reversible, narrow and deterministically testable.
+### 4. Build dependency-aware batches
 
-Do not classify by task length or filename count alone.
+Group compatible ready tasks to reduce model switching. Each batch records executor, entry dependencies, tasks, shared context, files, locks, validation command, stop condition and next switch.
 
-### 4. Optimize total expected cost
+Preserve the plan graph. A batch may contain only tasks whose internal order and external dependencies are explicit. Never place concurrent tasks in batches that write the same locked file or component.
 
-Estimate qualitatively:
+Compute:
 
-~~~text
-expected_total_cost =
-  model_execution_cost
-  + probability_of_rework × impact_of_rework
-  + review_and_coordination_cost
-~~~
+- first globally ready task;
+- next ready task per model;
+- first model switch;
+- blocking dependency where a queue is empty.
 
-Use STRONG when rework can invalidate downstream tasks. Use ECONOMY when output can be cheaply tested and replaced.
+### 5. Install switch checkpoints
 
-### 5. Make dependency-aware queues
+Every model change uses the mandatory checkpoint template. Record revisions, task state, changed files, diff, commands, passing/failing tests, decisions, contract changes, remaining risk, exact next command and required reading.
 
-1. Preserve the original dependency graph.
-2. Assign every task exactly once.
-3. Compute the next ready task per tier.
-4. Show expected model switching points by phase.
-5. Never skip an unmet dependency to keep a model busy.
-6. When no task is ready for the active tier, return AGUARDANDO_EXECUTOR and name the required tier/task.
+Never transfer an in-progress task between executors. Reassignment requires a recorded plan/routing change or an authorized task split.
 
-Avoid parallel work that edits the same contracts/files unless the plan explicitly isolates it.
+### 6. Keep AGENTS.md as an index
 
-### 6. Embed ownership
+The root `AGENTS.md` contains discovery instructions only:
 
-Create a routing document with:
+1. read `PROGRESS.md`;
+2. read its `active_artifact`;
+3. read the current handoff;
+4. read task-referenced contracts.
 
-- tier definitions;
-- classification rules;
-- all task IDs and assigned executor;
-- rationale category;
-- switching cadence;
-- initial ready task per executor;
-- update/audit rules.
+`PROGRESS.md` is the only operational pointer. Do not duplicate current status, queue state, active executor or task assignment in `AGENTS.md`.
 
-Also add an Executor/Owner field directly to every task specification. The routing matrix is the audit source; the task field prevents accidental execution when only a phase file is open.
+### 7. Create implementation handoff
 
-### 7. Create repository agent instructions
+Create `handoffs/ROUTING-TO-IMPLEMENTATION.md` with plan/routing revisions, model registry, initial tasks, first switch, escalation, required reading, validation commands/results, gate state and protocols for `start`, `continue` and scope change.
 
-The root AGENTS.md must tell future agents:
-
-- which master/context document to read first;
-- progress and routing read order;
-- phrases that select each executor;
-- how selection persists across “continue”;
-- that executor identification comes from the user;
-- how to select compatible ready work;
-- not to take work from another queue;
-- how to checkpoint on model switch;
-- what a lower-tier agent must escalate;
-- how completion evidence is recorded.
-
-Use the AGENTS asset as a starting point, preserving any higher-priority repository instructions.
-
-### 8. Update progress state
-
-Persist:
-
-- Active executor;
-- Active queue;
-- Current task;
-- Next ready task globally;
-- Next ready task per executor;
-- required switch/dependency;
-- last complete task;
-- next concrete action.
-
-An executor announcement alone may act as “continue” after implementation starts if the user wants that behavior. Before initial start authorization, only persist the selection.
-
-### 9. Validate
+### 8. Validate and transition
 
 Run:
 
 ~~~text
-python skills/route-ai-work-by-capability/scripts/validate_routing.py \
-  <tasks-directory> <routing-document> \
-  --tiers <ECONOMY_NAME>,<STRONG_NAME>
+python skills/route-ai-work-by-capability/scripts/validate_routing.py docs/ai/<project-slug>
 ~~~
 
-The validator must report:
+On success increment `routing_revision`, preserve `routing_based_on_plan_revision`, and set:
 
-- same task set in specs and routing;
-- no duplicate route;
-- no missing task;
-- embedded Executor fields match the matrix;
-- count per tier.
+~~~yaml
+stage: ROUTING
+status: IMPLEMENTATION_READY
+active_skill: route-ai-work-by-capability
+next_skill: implementation
+handoff_status: READY
+active_artifact: docs/ai/<project-slug>/handoffs/ROUTING-TO-IMPLEMENTATION.md
+~~~
 
-Manually review hard gates; a mechanically valid assignment can still be unsafe.
+Do not start implementation. Stop after reporting artifacts, counts, initial ready task/executor, first switch and validation result.
 
-## Lower-tier escalation rule
+## Escalation and change control
 
-The ECONOMY executor must stop and record STRONG_REVIEW_REQUIRED when it discovers:
+An implementer must stop when it finds a missing/contradictory contract, schema decision, security ambiguity, concurrency issue, critical oracle failure or scope expansion.
 
-- missing/contradictory contract;
-- new schema or migration decision;
-- security policy ambiguity;
-- unanticipated concurrency/state issue;
-- failing critical oracle requiring algorithm change;
-- a need to broaden scope.
+- Small change: update task and traceability, increment `plan_revision`, and update routing revision if affected.
+- Structural change: set `REPLAN_REQUIRED`, `next_skill: create-spec-driven-plan`.
+- Product-intent change: set `REBRAINSTORM_REQUIRED`, `next_skill: brainstorm-idea-with-user`.
 
-It may fix local syntax/config/test issues within the task; it may not invent a new architecture to proceed.
-
-## Strong-tier rule
-
-The STRONG executor should:
-
-- resolve hard decisions and record ADRs;
-- make downstream mechanical work explicit;
-- correct a completed economy dependency only when it blocks strong work, with history;
-- avoid consuming the economy queue merely because it can.
+The implementer records the reason but does not silently choose or execute another stage.
 
 ## Output contract
 
-Report:
+Produce only:
 
-- tier/model mapping;
-- counts;
-- routing document;
-- root agent instructions;
-- initial ready task and executor;
-- first switching point;
-- validation result.
+- `plan/ROUTING.md`;
+- `MODEL-CAPABILITIES.md`;
+- model-switch checkpoint template/reference;
+- `handoffs/ROUTING-TO-IMPLEMENTATION.md`;
+- routing fields in existing task specs where authorized;
+- the minimal `AGENTS.md` discovery index;
+- the routing transition in `PROGRESS.md`.
 
-## Failure rules
-
-- Do not use model brand prestige as the rubric.
-- Do not assign one task to multiple executors.
-- Do not route an unready task.
-- Do not let a cheap model make an implicit high-impact decision.
-- Do not let the strong model become a bottleneck for deterministic wiring.
-- Do not claim savings without considering rework and review.
+Do not claim readiness unless validation succeeds.

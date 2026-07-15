@@ -1,54 +1,53 @@
-# Organização da pasta de brainstorm
+# Organização documental do brainstorm
 
-Objetivo: contexto rico o suficiente para não se perder entre sessões, sem virar uma pasta com
-dezenas de arquivos que ninguém mais consegue acompanhar.
+Use uma única raiz durante todo o workflow:
 
-## Estrutura padrão (o normal, para a maioria dos casos)
-
-```
-docs/brainstorms/<slug>/
-└── brainstorm.md          # único arquivo, sempre atualizado in-place
-```
-
-Isso é suficiente para a grande maioria dos brainstorms. Não crie a subpasta `topicos/` de
-antemão "por precaução" — só quando o gatilho abaixo for atingido de verdade.
-
-## Quando dividir em mais arquivos
-
-Divida um tema para `topicos/<tema>.md` quando **qualquer** um destes for verdade:
-
-- A seção sobre aquele tema no `brainstorm.md` já passou de ~40-50 linhas.
-- O tema foi renegociado 3+ vezes ao longo da conversa (ex: modelo de dados mudou várias vezes) e
-  vale preservar o raciocínio de cada mudança, não só o estado final.
-- O tema é tecnicamente denso o suficiente para atrapalhar a leitura do resto (ex: um desenho de
-  arquitetura com vários componentes, uma comparação extensa de fornecedores/bibliotecas).
-
-Quando dividir:
-
-```
-docs/brainstorms/<slug>/
-├── brainstorm.md
-└── topicos/
-    ├── modelo-de-dados.md
-    ├── integracao-pagamentos.md
-    └── arquitetura-notificacoes.md
+```text
+docs/ai/<project-slug>/
+├── PROGRESS.md                 # único ponteiro operacional
+├── CONTEXT-INDEX.md            # índice, sem estado duplicado
+├── SOURCE-REGISTER.md          # origem e autoridade das informações
+├── GLOSSARY.md
+├── brainstorm/
+│   ├── BRAINSTORM.md           # estado detalhado da etapa
+│   └── topics/                 # criado somente quando necessário
+└── handoffs/
+    └── BRAINSTORM-TO-PLAN.md
 ```
 
-No `brainstorm.md`, deixe apenas um resumo de 2-3 linhas por tópico + o link para o arquivo. Quem
-só quer o estado geral não precisa abrir os tópicos; quem precisa do detalhe, abre o específico.
+## Autoridade
 
-## Limite prático de arquivos
+- `PROGRESS.md`: etapa, status, skill ativa, próxima ação e revisões.
+- `BRAINSTORM.md`: conteúdo consolidado do brainstorm.
+- `SOURCE-REGISTER.md`: autoridade, versão e validade das fontes.
+- `BRAINSTORM-TO-PLAN.md`: pacote imutável da revisão entregue ao planejamento.
+- `AGENTS.md`: apenas descoberta de `PROGRESS.md`; nunca status.
 
-Como regra prática: se a pasta (incluindo `topicos/`) está passando de **6-8 arquivos**, é sinal
-de que o brainstorm ficou grande demais para o formato de brainstorm — nesse ponto, considere
-propor ao usuário avançar para o spec formal mesmo que ainda restem detalhes menores, já que o
-spec tem uma estrutura melhor para organizar esse volume de informação do que uma pasta de notas.
+Não duplique uma afirmação para “garantir”. Registre o detalhe na fonte competente e use links nos
+índices e handoffs.
 
-## O que NUNCA fazer
+## Quando extrair um tópico
 
-- Um arquivo por sessão de conversa (`sessao-1.md`, `sessao-2.md`, `2026-07-14.md`...). Isso
-  obriga quem retoma o brainstorm a ler tudo em ordem cronológica para entender o estado atual.
-  Sempre consolide no `brainstorm.md`.
-- Duplicar a mesma informação em dois arquivos "pra garantir". Se uma decisão pertence a um
-  tópico, ela vive lá — no `brainstorm.md` fica só o resumo com link.
-- Deixar arquivos de tópico órfãos (sem nenhuma referência a partir do `brainstorm.md`).
+Comece somente com `brainstorm/BRAINSTORM.md`. Extraia para
+`brainstorm/topics/<topic>.md` quando qualquer condição ocorrer:
+
+- a seção ultrapassar aproximadamente 40–50 linhas;
+- o tema tiver sido renegociado três ou mais vezes e o raciocínio precisar ser preservado;
+- o conteúdo técnico prejudicar a leitura do brainstorm principal.
+
+No arquivo principal, deixe um resumo de duas ou três linhas e um link local. O tópico deve declarar
+os IDs relacionados e nunca pode ficar órfão.
+
+## Limites
+
+Se `topics/` passar de seis a oito arquivos, reavalie se as questões estruturais já estão fechadas.
+Detalhes menores devem seguir para o planejamento, não prolongar indefinidamente o brainstorm.
+
+## Proibido
+
+- Arquivo por sessão ou data.
+- Outro `PROGRESS.md` dentro de subpastas.
+- Nomes alternativos como `brainstorm.md`, `topicos/` ou `docs/brainstorms/` no contrato v2.
+- Status operacional em `AGENTS.md` ou `CONTEXT-INDEX.md`.
+- Tópicos sem link a partir de `BRAINSTORM.md`.
+- Alterar documentos de `plan/` ou `ROUTING.md` durante esta skill.

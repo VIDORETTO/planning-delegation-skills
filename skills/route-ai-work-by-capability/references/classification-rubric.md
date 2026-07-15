@@ -12,7 +12,10 @@
 8. Dependency routing
 9. Review and handoff
 10. Examples
-11. Anti-patterns
+11. Confidence and review policy
+12. Batches and file locks
+13. Change control
+14. Anti-patterns
 
 ## 1. Goal
 
@@ -249,6 +252,8 @@ Checkpoint:
 - exact next action;
 - required executor.
 
+The checkpoint is mandatory and must also record plan/routing revisions, files changed, commands, passing and failing tests, contract changes, remaining risks, exact next command and required reading. Use `assets/MODEL-SWITCH-CHECKPOINT.template.md`.
+
 Do not transfer an in-progress task across tiers unless the user explicitly reassigns it or it is formally split.
 
 ## 10. Examples
@@ -289,7 +294,54 @@ E2E task:
 - ECONOMY if scenario and expected outputs are complete and core is stable;
 - STRONG if failures require diagnosing algorithmic or distributed behavior.
 
-## 11. Anti-patterns
+## 11. Confidence and review policy
+
+Record routing confidence separately from risk:
+
+- `HIGH`: contract, files, tests and model capability are explicit;
+- `MEDIUM`: one bounded uncertainty remains and review can detect failure;
+- `LOW`: material ambiguity remains. Return the task to planning instead of routing it.
+
+Every task has exactly one executor. A reviewer is independent and never becomes a second owner.
+
+| Review mode | Use |
+|---|---|
+| `NONE` | low-risk deterministic work |
+| `SAMPLE` | repeated low-risk work with periodic quality checks |
+| `REQUIRED_BEFORE_COMPLETE` | review must pass before the task becomes COMPLETE |
+| `REQUIRED_BEFORE_RELEASE` | task may complete, but release is blocked |
+| `ADVERSARIAL_REVIEW` | security, abuse, privacy or critical negative paths |
+
+When review is required, executor and reviewer must be different registered models. Hard-gated work still requires a STRONG executor; review never compensates for an incapable executor.
+
+## 12. Batches and file locks
+
+A batch reduces context switching but never changes task ownership or dependencies. Record:
+
+- stable batch ID;
+- one executor;
+- entry dependencies;
+- ordered task IDs;
+- shared context;
+- files/components and write locks;
+- `SEQUENTIAL` or `PARALLEL` execution;
+- validation command;
+- stop condition;
+- next switch.
+
+Parallel batches must have disjoint write locks. Tasks in one sequential batch may depend on earlier tasks in that batch. A task may appear in exactly one batch.
+
+## 13. Change control
+
+Routing cannot repair an invalid plan.
+
+- Missing task contract, invalid dependency or unauthorized split: set `REPLAN_REQUIRED` and return to `create-spec-driven-plan`.
+- Changed actor, product problem or primary objective: set `REBRAINSTORM_REQUIRED` and return to `brainstorm-idea-with-user`.
+- Small non-structural change: update task and traceability, increment `plan_revision`, then increment `routing_revision` if assignment, batch, review or locks changed.
+
+Record why a change belongs to a category. An implementer may identify the condition but must not silently perform another workflow stage.
+
+## 14. Anti-patterns
 
 - “Big task = strong model.”
 - “All code = strong, all docs = cheap.”
@@ -301,3 +353,8 @@ E2E task:
 - No persisted active executor.
 - No routing audit.
 - Counting inference savings while ignoring rework.
+- Using an unregistered or undated model capability assumption.
+- Treating a reviewer as a co-owner.
+- Parallel batches sharing a write lock.
+- Repairing plan semantics during routing.
+- Starting implementation in the routing invocation.

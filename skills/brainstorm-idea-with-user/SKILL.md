@@ -1,252 +1,241 @@
 ---
 name: brainstorm-idea-with-user
 description: >
-  Use whenever the user brings a new project/feature idea — breve ou já detalhada — e o objetivo
-  ainda é "entender e amadurecer o que construir", não escrever código ainda. Entrevista em
-  rodadas curtas, reflete e sugere alternativas com trade-offs mas sempre deixa a decisão final
-  com o usuário, e mantém contexto entre sessões gravando um arquivo de estado enxuto em pasta
-  dedicada + resumo em AGENTS.md. Ao final, entrega o brainstorm para spec-driven-dev (ou
-  equivalente) gerar o documento com fases e tarefas. Trigger: "tenho uma ideia", "quero criar um
-  app/sistema/feature", "vamos pensar juntos sobre...", "validar essa ideia antes de codar",
-  "continuar o brainstorm", "onde paramos com aquela ideia", "brainstorm". Vem ANTES de
-  spec-driven-dev, não substitui.
+  Use whenever the user brings a new project or feature idea and the objective is to understand,
+  challenge and mature what should be built before formal planning. Conduct short interview rounds,
+  preserve the original idea, decisions, rejected suggestions, assumptions, risks and stable IDs,
+  maintain the planning-delegation/v2 workflow state, and produce a validated handoff for a later
+  invocation of create-spec-driven-plan. Also use to resume BRAINSTORM_IN_PROGRESS or
+  REBRAINSTORM_REQUIRED. Never perform planning, routing or implementation in this skill.
 ---
 
-# Brainstorm de Ideia com o Usuário
+# Collaborative Product Brainstorm
 
-Transforma uma ideia inicial (rascunho de uma frase ou um parágrafo detalhado) em um **brainstorm
-maduro e documentado**, através de diálogo real — não um questionário mecânico. O resultado final
-é contexto rico e persistente o suficiente para que qualquer IA (ou você, em uma sessão futura)
-entenda o projeto e gere um plano formal de execução.
+Transform an initial idea into a mature, traceable product brief. Preserve the user's intent and
+decision authority while contributing alternatives and trade-offs. The output is a validated
+brainstorm package, not a formal implementation plan.
 
-Esta skill cobre **antes** do plano formal. Quando o brainstorm estiver maduro, o hand-off natural
-é para `spec-driven-dev` (Modo B — Criar spec do zero), que já sabe entrevistar, classificar e
-gerar o documento com fases/tarefas. Não duplique esse trabalho aqui — o objetivo desta skill é
-preparar o terreno para que aquela etapa seja rápida e sem retrabalho.
+## Workflow contract
 
----
+This skill participates in `planning-delegation/v2`:
 
-## Visão geral do fluxo
-
-```
-1. Captar a ideia inicial (verbatim)
-2. Detectar estado da sessão (nova ou continuação)  → ver "Continuidade entre sessões"
-3. Diagnosticar lacunas (o que falta para decidir)
-4. Entrevistar em rodadas curtas
-5. Refletir e sugerir (sempre com alternativas + trade-offs)
-6. Registrar decisões e pontos em aberto no arquivo de estado
-7. Checar sinais de "pronto para virar plano"
-8. Atualizar AGENTS.md
-9. Repetir 3-8 até maduro
-10. Hand-off para spec-driven-dev (ou skill de planejamento/roteamento disponível)
+```text
+brainstorm-idea-with-user
+→ create-spec-driven-plan
+→ route-ai-work-by-capability
+→ implementation
 ```
 
-Nunca pule o passo 6 — é o que garante que a próxima sessão não comece do zero.
+Use one shared workflow root from the first brainstorm onward:
 
----
+```text
+docs/ai/<project-slug>/
+├── PROGRESS.md
+├── CONTEXT-INDEX.md
+├── SOURCE-REGISTER.md
+├── GLOSSARY.md
+├── brainstorm/
+│   ├── BRAINSTORM.md
+│   └── topics/
+└── handoffs/
+    └── BRAINSTORM-TO-PLAN.md
+```
 
-## Passo 1: Captar a ideia inicial
+`PROGRESS.md` is the only operational pointer. `AGENTS.md` is only a discovery index.
+`BRAINSTORM.md` is the detailed source of truth for this stage.
 
-Guarde a ideia exatamente como o usuário descreveu, sem reescrever ou "melhorar" ainda. Isso vai
-para a seção `## Ideia original` do arquivo de estado (ver template). Não interprete demais nesse
-momento — resista ao impulso de já sugerir soluções antes de entender o problema.
+## Exclusive stage ownership
 
-Classifique mentalmente o nível de detalhe recebido:
-- **Semente** (uma frase, tipo "quero um app para dividir contas entre amigos")
-- **Esboço** (alguns parágrafos, já com um público-alvo ou funcionalidade central clara)
-- **Detalhado** (já tem fluxos, restrições técnicas, ou exemplos concretos)
+Execute only the brainstorm stage. Do not invoke, execute or mix the next skill in the same
+operation. When the brainstorm is ready:
 
-Quanto mais raso o nível, mais rodadas de entrevista serão necessárias — mas mesmo uma ideia
-"detalhada" quase sempre tem lacunas de decisão que valem uma pergunta.
+1. validate the artifacts;
+2. generate `handoffs/BRAINSTORM-TO-PLAN.md`;
+3. update `PROGRESS.md`;
+4. set `next_skill: create-spec-driven-plan`;
+5. stop.
 
----
+If the current state belongs to another skill, do not modify its artifacts. Report the skill named
+by `next_skill`. Never plan tasks, route models or implement code here.
 
-## Passo 2: Continuidade entre sessões
+## Entry gate
 
-**Sempre, antes de perguntar qualquer coisa, verifique se já existe brainstorm em andamento:**
+Before asking questions or writing files, discover the project workflow through `AGENTS.md`, then
+read `docs/ai/<slug>/PROGRESS.md`. Reading order:
 
-1. Procure em `AGENTS.md` (ou `agents.md`) uma seção `## Brainstorms` ou `## Brainstorm em andamento`.
-2. Se existir referência a uma pasta de brainstorm para este projeto/tema, leia os arquivos dela
-   (comece pelo arquivo de estado principal, não pelos arquivos de tópicos — ver
-   `references/organizacao-de-pasta.md` para saber o que ler primeiro quando houver vários arquivos).
-3. Se encontrar um brainstorm relacionado ao que o usuário está trazendo agora, **não recomece do
-   zero**. Abra com um recap curto (3-5 linhas) do que já foi decidido e do que ficou em aberto, e
-   pergunte se algo mudou desde então.
-4. Se não existir nada, trate como novo brainstorm e siga o fluxo normal a partir do Passo 3.
+1. `PROGRESS.md`;
+2. `active_artifact`;
+3. the current-stage handoff, if any;
+4. documents linked by those files.
 
-Se o usuário mencionar um projeto/ideia por nome mas você não achar a pasta esperada, diga isso
-abertamente em vez de fingir que lembra ou de inventar contexto.
+Allowed entry conditions:
 
----
-
-## Passo 3: Diagnosticar lacunas
-
-Antes de perguntar qualquer coisa, pense (internamente, não precisa expor todo o raciocínio):
-
-- O que já está claro o suficiente para não precisar perguntar de novo?
-- Quais decisões, se erradas, custariam caro mudar depois (arquitetura, modelo de dados, escopo)?
-  Essas têm prioridade de pergunta.
-- Quais são só preferências de superfície (cores, nomes) que podem esperar ou nem precisam de
-  pergunta — você pode sugerir um padrão razoável e seguir?
-- Existe alguma suposição perigosa que, se eu simplesmente assumir, pode levar a retrabalho grande?
-
-Isso vira a pauta das rodadas de entrevista.
-
----
-
-## Passo 4: Entrevistar em rodadas curtas
-
-Regras:
-- **No máximo 2-3 perguntas por rodada.** Espere a resposta antes de continuar — nunca dispare
-  uma lista de 10 perguntas de uma vez.
-- Priorize perguntas que decidem algo estrutural sobre perguntas de detalhe cosmético.
-- Prefira perguntas com opções sugeridas ("A, B ou algo diferente do que você tem em mente?") a
-  perguntas totalmente abertas quando fizer sentido — mas não force isso quando a pergunta é
-  genuinamente aberta ("o que mais te incomoda no processo atual?").
-- Se o ambiente tiver suporte a botões de escolha rápida e a pergunta for de preferência entre
-  opções concretas (não uma questão de julgamento aberto), considere usar essa interação em vez de
-  perguntar em texto corrido.
-- Depois de cada rodada respondida, registre o que foi decidido no arquivo de estado (Passo 6)
-  antes de seguir para a próxima rodada — não acumule tudo para escrever no final.
-
-Veja `references/roteiro-de-entrevista.md` para bancos de perguntas por tipo de projeto (produto
-novo, feature em produto existente, automação/script, problema ainda sem forma de solução).
-
----
-
-## Passo 5: Refletir e sugerir
-
-Depois de cada resposta relevante, faça sua própria análise antes de só aceitar o que foi dito:
-
-- Existe uma abordagem mais simples, mais barata ou mais robusta do que a que o usuário descreveu?
-- O escopo pedido parece maior do que o necessário para validar a ideia central? Vale sugerir um
-  corte (ex: MVP) sem tirar a decisão final do usuário?
-- Há um risco técnico ou de produto que o usuário provavelmente não considerou?
-
-Quando notar algo assim, **diga claramente e proponha a alternativa com trade-offs em 2-3 frases**,
-por exemplo:
-
-> "Você descreveu um sistema com login próprio. Uma alternativa mais rápida de validar seria usar
-> login social (menos código, menos manutenção), com a desvantagem de depender de terceiros. Quer
-> seguir com login próprio mesmo, ou prefere essa rota mais enxuta pra validar primeiro?"
-
-**Regra de ouro: a decisão final é sempre do usuário.** Sua sugestão é uma oferta, não uma
-imposição — se o usuário already disse "quero X", não insista em Y depois de ele já ter escolhido,
-a menos que surjam novas informações. Registre tanto a sugestão feita quanto a decisão tomada,
-mesmo quando o usuário não seguiu sua recomendação (isso evita que uma sessão futura sugira a
-mesma coisa de novo).
-
----
-
-## Passo 6: Registrar no arquivo de estado
-
-Depois de qualquer troca que gere uma decisão, uma pergunta em aberto, ou uma mudança de escopo,
-atualize a pasta de brainstorm. Não espere o fim da conversa.
-
-### Onde gravar
-
-Pasta: `docs/brainstorms/<slug-do-projeto>/` (ou `brainstorms/<slug>/` na raiz se o projeto não
-tiver pasta `docs/`). Use um slug curto e estável em kebab-case (ex: `divide-contas-app`,
-`onboarding-v2`).
-
-### Arquivo principal (sempre existe, sempre um só): `brainstorm.md`
-
-Use `templates/brainstorm-state-template.md` como base. Este arquivo é a **fonte única de
-verdade em andamento** — atualize-o in-place (edite seções existentes), não acumule histórico
-duplicado nele. Ele deve caber numa leitura de poucos minutos mesmo depois de várias sessões.
-
-### Quando criar arquivos adicionais
-
-A pasta **não deve virar uma bagunça de arquivos soltos**. Comece só com `brainstorm.md`. Só
-adicione arquivos extras quando um tópico específico crescer demais para caber legível dentro
-dele — regra prática: se uma seção do `brainstorm.md` passaria de ~40-50 linhas ou está sendo
-reescrita/renegociada muitas vezes, extraia para `topicos/<tema>.md` e deixe no `brainstorm.md`
-apenas um resumo de 2-3 linhas + link para o arquivo. Consulte
-`references/organizacao-de-pasta.md` para os limites exatos e exemplos de quando vale a pena
-dividir.
-
-Nunca crie um arquivo novo por sessão (tipo `sessao-2026-07-14.md`) — isso é exatamente o tipo de
-pasta confusa que o usuário pediu para evitar. Histórico de sessão vira uma seção curta
-"Últimas atualizações" dentro do próprio `brainstorm.md`, com no máximo as últimas 3-5 entradas —
-entradas mais antigas são resumidas ou removidas, não empilhadas para sempre.
-
----
-
-## Passo 7: Sinais de "pronto para virar plano"
-
-Depois de atualizar o estado, cheque se já dá para avançar para `spec-driven-dev`. Sinais:
-
-- O problema central e o público/uso estão claros e sem contradição.
-- As decisões estruturais de maior risco (arquitetura, escopo do MVP, restrições técnicas,
-  integrações externas) estão fechadas ou o usuário disse explicitamente "decide você".
-- Não há mais pergunta em aberto que, se respondida diferente, mudaria o plano inteiro.
-- O usuário sinalizou diretamente que quer avançar ("bora pro plano", "acho que já temos o
-  suficiente", "pode gerar o documento").
-
-Se **todos** os sinais estruturais baterem mas ainda houver only itens de detalhe menor, você pode
-propor avançar e resolver os detalhes menores durante a criação do spec. Não trave o processo por
-perfeccionismo.
-
-Se faltar clareza estrutural, diga isso ao usuário e continue a entrevista — não force um hand-off
-prematuro só porque a conversa está longa.
-
----
-
-## Passo 8: Atualizar o AGENTS.md
-
-Sempre que a pasta de brainstorm for criada ou atualizada de forma relevante (não a cada pergunta
-trivial — a cada decisão estrutural ou mudança de status), atualize `AGENTS.md` na raiz do
-projeto (crie o arquivo se não existir; se o usuário já tiver um `AGENTS.md`, edite apenas a seção
-relevante, sem tocar no resto).
-
-Use `templates/agents-md-snippet-template.md` como formato da seção. Ela deve conter, por
-brainstorm ativo ou concluído:
-
-- Status (`em andamento` / `pronto para virar spec` / `convertido em spec em <caminho>`)
-- Caminho da pasta e do arquivo principal
-- Resumo de 2-3 linhas da ideia original
-- Data da última atualização
-
-Isso é o que permite que **qualquer** IA (Claude ou outra) que abra o projeto do zero encontre o
-brainstorm sem precisar que o usuário reexplique tudo.
-
----
-
-## Passo 9: Handoff para o plano formal
-
-Quando os sinais do Passo 7 baterem e o usuário confirmar que quer seguir:
-
-1. Diga explicitamente que vai passar para a etapa de planejamento formal.
-2. Invoque o fluxo da skill `spec-driven-dev`, **Modo B — Criar spec do zero**, usando o conteúdo
-   do `brainstorm.md` (e arquivos de tópico, se houver) como a base já entrevistada — não repita
-   perguntas que o brainstorm já respondeu, passe o contexto adiante. Se o ambiente tiver outra
-   skill de roteamento de tarefas por capacidade/modelo de IA disponível, use-a na etapa de
-   classificação e sequenciamento, exatamente como o Modo A de `spec-driven-dev` já orienta.
-3. Depois que o documento de spec for gerado, atualize o `AGENTS.md` para
-   `convertido em spec em <caminho do spec>` e deixe a pasta de brainstorm como está — ela serve
-   como histórico do raciocínio por trás das decisões, não precisa ser apagada.
-
----
-
-## Erros comuns a evitar
-
-- Perguntar tudo de uma vez em uma lista longa — cansa o usuário e piora as respostas.
-- Aceitar a primeira descrição do usuário sem nenhuma reflexão própria — isso não é brainstorm, é
-  ditado.
-- Insistir na sua sugestão depois que o usuário já decidiu diferente.
-- Criar um arquivo novo a cada sessão em vez de atualizar o `brainstorm.md` existente.
-- Deixar o `AGENTS.md` sem atualização depois de decisões importantes — é o que quebra a
-  continuidade entre sessões.
-- Avançar para gerar o documento de fases/tarefas sem que as decisões estruturais estejam
-  fechadas.
-
----
-
-## Referências
-
-| Arquivo | Quando carregar |
+| Situation | Required action |
 |---|---|
-| `references/roteiro-de-entrevista.md` | Montar as perguntas de uma rodada, por tipo de projeto |
-| `references/organizacao-de-pasta.md` | Decidir se/quando dividir o brainstorm em mais arquivos |
-| `templates/brainstorm-state-template.md` | Criar ou reestruturar o `brainstorm.md` |
-| `templates/agents-md-snippet-template.md` | Criar/atualizar a seção de brainstorm no `AGENTS.md` |
+| No workflow exists for a new idea | Create it as `BRAINSTORM_IN_PROGRESS` |
+| `status: BRAINSTORM_IN_PROGRESS` and `active_skill: brainstorm-idea-with-user` | Resume without repeating answered questions |
+| `status: REBRAINSTORM_REQUIRED` and `next_skill: brainstorm-idea-with-user` | Record the reason and transition to `BRAINSTORM_IN_PROGRESS` |
+| Any other status owned by another skill | Stop without modifying artifacts |
+
+For a new workflow initialize:
+
+```yaml
+workflow_contract: planning-delegation/v2
+stage: BRAINSTORM
+status: BRAINSTORM_IN_PROGRESS
+active_skill: brainstorm-idea-with-user
+next_skill: create-spec-driven-plan
+handoff_status: NOT_READY
+brainstorm_revision: 1
+plan_revision: 0
+routing_revision: 0
+plan_based_on_brainstorm_revision: null
+routing_based_on_plan_revision: null
+active_artifact: docs/ai/<slug>/brainstorm/BRAINSTORM.md
+```
+
+Use `templates/progress-template.md`. Preserve unknown frontmatter keys owned by the wider workflow.
+
+## Method
+
+### 1. Capture and identify
+
+Store the user's first description as close to verbatim as possible in `## Ideia original`. Never
+rewrite that section later. Assign a stable project ID and kebab-case slug. Classify the work as
+new product, feature, automation or research.
+
+### 2. Diagnose gaps
+
+Determine what is already answered and what could materially change the solution. Prioritize:
+
+- problem and desired outcome;
+- actors, permissions and journeys;
+- first usable release and explicit non-goals;
+- business rules and data lifecycle;
+- critical integrations and structural constraints;
+- success metrics, prohibited outcomes and major risks.
+
+Use `references/roteiro-de-entrevista.md` as a question bank, not a fixed questionnaire.
+
+### 3. Interview in short rounds
+
+- Ask at most two or three questions per round.
+- Do not repeat answers already present in the active artifacts.
+- Prefer concrete alternatives when useful, but allow genuinely open answers.
+- Wait for the response before continuing.
+- After each material response, update the artifacts before the next round.
+
+### 4. Reflect and suggest
+
+Challenge complexity, hidden assumptions and premature scope. Offer simpler or more robust
+alternatives with concise trade-offs. The user retains final decision authority. Once rejected, do
+not re-propose an option unless new evidence changes the trade-off; record it under `Sugestões
+recusadas`.
+
+### 5. Maintain stable records
+
+Use `templates/brainstorm-state-template.md`. Assign IDs once and never renumber them:
+
+| Entity | Prefix |
+|---|---|
+| Decision | `DEC-001` |
+| Open question | `Q-001` |
+| Assumption | `ASM-001` |
+| Risk | `RISK-001` |
+| Business rule | `BR-001` |
+| Journey | `JRN-001` |
+| Candidate requirement | `CR-001` |
+| Source | `SRC-001` |
+
+Increment `brainstorm_revision` whenever a material decision, scope boundary, assumption, rule,
+requirement or handoff changes. Keep the revision in `BRAINSTORM.md`, `PROGRESS.md` and the handoff
+synchronized.
+
+Create or maintain:
+
+- `SOURCE-REGISTER.md`: source, type, authority, date/version, claims and validity;
+- `GLOSSARY.md`: project-specific meanings;
+- `CONTEXT-INDEX.md`: links to active documents, without duplicating status;
+- `AGENTS.md`: discovery pointer only, using its template.
+
+### 6. Keep documentation compact
+
+Start with one `brainstorm/BRAINSTORM.md`. Extract a topic only when it exceeds roughly 40–50
+lines, has been renegotiated at least three times, or is too technically dense. Put it in
+`brainstorm/topics/<topic>.md` and leave a short summary plus link in the main file. Never create a
+file per session. See `references/organizacao-de-pasta.md`.
+
+### 7. Evaluate planning readiness
+
+The brainstorm can become ready only when:
+
+- the problem, actors, MVP and non-goals are clear;
+- structural constraints and critical integrations are recorded;
+- primary success measures are known;
+- every structural question is closed or explicitly delegated;
+- active assumptions and risks are visible;
+- all readiness checkboxes are complete;
+- the handoff is generated and passes validation.
+
+Minor questions may remain only when they can be resolved during planning without changing product
+intent, MVP, actor model, architecture class, core data model or critical integration.
+
+### 8. Produce the handoff and stop
+
+Build `handoffs/BRAINSTORM-TO-PLAN.md` from its template. Its `Questões estruturais` section must
+explicitly say `Nenhuma.` for a ready handoff. Preserve rejected suggestions and all IDs. The next
+skill must convert each `CR-*` to a formal requirement without losing origin.
+
+Run:
+
+```bash
+python brainstorm-idea-with-user/scripts/validate_brainstorm.py docs/ai/<slug>
+```
+
+Only after it passes, set:
+
+```yaml
+stage: BRAINSTORM
+status: BRAINSTORM_READY
+active_skill: brainstorm-idea-with-user
+next_skill: create-spec-driven-plan
+handoff_status: READY
+last_validation:
+  command: python brainstorm-idea-with-user/scripts/validate_brainstorm.py docs/ai/<slug>
+  result: PASS
+```
+
+If validation fails, remain `BRAINSTORM_IN_PROGRESS`, set `handoff_status: NOT_READY`, correct only
+brainstorm-owned artifacts and rerun. Do not invoke `create-spec-driven-plan`; tell the user that it
+is the next separate invocation.
+
+## Change-control re-entry
+
+- Product intent changed (audience, core problem or primary outcome): accept
+  `REBRAINSTORM_REQUIRED`, record the cause and re-open the relevant questions.
+- Structural implementation change without product-intent change: ownership remains with
+  `create-spec-driven-plan`; do not edit its documents.
+- Small implementation detail: do not reopen brainstorm.
+
+## Required references and assets
+
+| File | Use |
+|---|---|
+| `references/roteiro-de-entrevista.md` | Select the next short interview round |
+| `references/organizacao-de-pasta.md` | Decide when to extract topics |
+| `templates/brainstorm-state-template.md` | Create `BRAINSTORM.md` |
+| `templates/progress-template.md` | Initialize shared workflow state |
+| `templates/brainstorm-to-plan-handoff-template.md` | Produce the validated handoff |
+| `templates/agents-md-snippet-template.md` | Create the discovery-only project index |
+| `templates/source-register-template.md` | Record source authority and validity |
+| `templates/context-index-template.md` | Create the non-operational document index |
+| `templates/glossary-template.md` | Define project-specific terminology |
+
+## Prohibitions
+
+- Do not invoke another skill in the same operation.
+- Do not use `AGENTS.md` as a status source.
+- Do not silently decide structural questions for the user; mark delegated decisions explicitly.
+- Do not turn rejected suggestions into requirements.
+- Do not create chronological session files.
+- Do not mark ready with placeholders, missing local links or structural questions open.

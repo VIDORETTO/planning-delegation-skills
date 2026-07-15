@@ -1,8 +1,17 @@
 # Source analysis
 
+## Brainstorm consumed
+
+- Brainstorm revision: <INTEGER>
+- Handoff: `../handoffs/BRAINSTORM-TO-PLAN.md`
+- Decisions preserved: <DEC_IDS_OR_NONE>
+- Questions already answered: <Q_IDS_OR_NONE>
+- Assumptions imported: <ASM_IDS_OR_NONE>
+- Rejected suggestions preserved: <IDS_OR_NONE>
+
 ## Material analyzed
 
-- <SOURCE_AND_SIZE>
+- <SRC_ID> — <SOURCE_AND_VERSION>
 
 ## Real objective
 
@@ -10,27 +19,34 @@
 
 ## Explicit concerns
 
-| Concern | Planning response |
-|---|---|
-| <CONCERN> | <CONTROL_OR_TASK> |
+| Concern | Source | Planning response |
+|---|---|---|
+| <CONCERN> | <SRC_ID> | <CONTROL_OR_TASK> |
+
+## Candidate requirement conversion
+
+| Candidate ID | Formal requirement | Classification | Evidence |
+|---|---|---|---|
+| CR-001 | REQ-001 | MUST | SRC-001 |
 
 ## Implicit needs
 
-- <INFERENCE> — evidence: <SOURCE>.
+- <INFERENCE> — classification: INFERRED; evidence: <SRC_ID>.
 
-## Useful prior suggestions
+## Rejected or deferred material
 
-- <PRESERVED_IDEA>
+- <ITEM_ID> — <REASON>
 
-## Gaps or corrections
+## Contradictions and gaps
 
-- <GAP> → <IMPROVEMENT>
+- <GAP> → <RESOLUTION_OR_OPEN_DECISION>
 
 ## Scope decisions
 
-- first usable release:
-- total vision:
-- deferred:
+- first usable release: <SCOPE>
+- total vision: <SCOPE>
+- outside scope: <SCOPE>
+- future: <SCOPE>
 
 ## Success definition
 

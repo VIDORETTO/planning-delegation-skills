@@ -1,57 +1,81 @@
 # Roteiro de entrevista por tipo de projeto
 
-Use como banco de perguntas — não como questionário fixo. Escolha 2-3 por rodada, priorizando o
-que é mais estrutural para o caso específico. Pule perguntas cuja resposta já está implícita no
-que o usuário já disse.
+Use como banco de perguntas, nunca como questionário fixo. Faça duas ou três por rodada, priorize
+decisões estruturais e pule tudo que os artefatos já respondem. Depois de cada resposta material,
+registre IDs, origem e revisão antes de continuar.
 
-## Produto/app novo
+## Núcleo comum
 
-**Rodada — problema e público**
-- Quem sente esse problema hoje, e o que essa pessoa faz na ausência da sua solução?
-- Existe algo parecido que as pessoas já usam (mesmo que de forma manual/improvisada)? O que
-  incomoda nisso?
-- Qual é o cenário mínimo que, se funcionar, já prova que a ideia vale a pena?
+### Problema e resultado
 
-**Rodada — escopo e restrições**
-- Existe uma plataforma alvo específica (web, mobile, ambos)?
-- Há alguma restrição técnica já decidida (stack, hospedagem, orçamento, prazo)?
-- Existe algo que você sabe que NÃO quer fazer agora, mesmo que pareça óbvio incluir?
+- Quem sofre o problema, com que frequência e qual é o impacto observável?
+- Como o trabalho acontece hoje e quais soluções improvisadas existem?
+- Qual mudança mínima faria o usuário perceber valor? Qual seria o resultado ideal?
+- Que resultado seria explicitamente proibido, mesmo que pareça eficiente?
 
-**Rodada — dados e integrações**
-- O sistema depende de dados/serviços externos (pagamento, autenticação social, APIs de
-  terceiros)? Quais?
-- Precisa funcionar offline ou em baixa conectividade?
+### Atores, permissões e jornadas
 
-## Feature em produto já existente
+- Quem inicia, executa, aprova, consulta ou administra o fluxo?
+- O que cada ator pode ver ou alterar? Existem organizações ou clientes que precisam ficar isolados?
+- Qual é o gatilho, caminho feliz, exceção mais comum e falha mais perigosa?
 
-**Rodada — encaixe**
-- Como essa feature se encaixa no que já existe? Ela substitui algo ou é aditiva?
-- Existe um padrão de design/arquitetura do projeto atual que ela precisa respeitar?
-- Quem mais no time/projeto é afetado por essa mudança (outras telas, outros fluxos)?
+### Escopo
 
-**Rodada — critério de sucesso**
-- Como você vai saber que essa feature está pronta e funcionando como esperado?
-- Existe alguma métrica ou comportamento que ela precisa preservar (não pode quebrar)?
+- Qual é a primeira entrega utilizável que testa a hipótese central?
+- O que pertence à visão completa, mas não ao MVP?
+- O que está explicitamente fora de escopo? O que é apenas futuro possível?
 
-## Automação / script / ferramenta interna
+### Dados, privacidade e escala
 
-**Rodada — gatilho e frequência**
-- O que dispara essa automação (evento, agenda, ação manual)?
-- Com que frequência ela roda, e o que acontece se ela falhar uma vez?
-- Quem é o "dono" dessa automação — quem precisa entender/ajustar ela no futuro?
+- Quais dados entram e saem, e qual sistema é a fonte de verdade?
+- Há dados pessoais, financeiros, médicos, credenciais ou outros dados sensíveis?
+- Qual retenção e exclusão são necessárias? Quem pode solicitar ou executar a exclusão?
+- Qual volume, frequência e crescimento devem ser suportados?
 
-**Rodada — dados de entrada e saída**
-- De onde vêm os dados de entrada, e em que formato?
-- Onde o resultado precisa aparecer (arquivo, planilha, mensagem, outro sistema)?
+### Integrações e restrições
 
-## Problema ainda sem forma de solução
+- Quais serviços externos são obrigatórios e qual alternativa existe se falharem?
+- Há stack, hospedagem, compatibilidade, prazo, orçamento ou ferramentas já decididos?
+- Existem obrigações legais, regulatórias, de segurança ou privacidade?
 
-Quando o usuário descreve uma dor mas não uma solução ainda:
+### Sucesso e evidência
 
-- Se você pudesse resolver isso hoje magicamente, o que mudaria no seu dia a dia?
-- O que você já tentou que não funcionou, e por quê não funcionou?
-- Existe uma solução que seria "boa o suficiente" mesmo que não fosse perfeita?
+- Qual é o estado atual da métrica, a meta e como ela será medida?
+- Que exemplo concreto de entrada e saída demonstra sucesso?
+- Qual caso problemático precisa ser tratado desde a primeira entrega?
 
-Nesses casos, é especialmente importante fazer o Passo 5 (Refletir e sugerir) da skill principal
-com força — o usuário pode não ter ainda um formato de solução em mente, e cabe a você propor 1-2
-caminhos concretos para reagir, em vez de só perguntar "o que você quer construir?" no vácuo.
+## Produto ou app novo
+
+- Existe algo semelhante que o público já usa? O que não funciona nessa alternativa?
+- A solução precisa ser web, mobile, desktop ou multicanal? Por quê?
+- Qual hipótese de adoção é mais arriscada e como poderia ser validada cedo?
+
+## Feature em produto existente
+
+- A feature substitui, estende ou interfere em qual fluxo atual?
+- Quais contratos, padrões, métricas e comportamentos não podem regredir?
+- Há migração de dados, compatibilidade retroativa ou rollout gradual?
+
+## Automação ou ferramenta interna
+
+- O que dispara a automação e quem é responsável por operá-la?
+- O que acontece após falha, repetição ou execução parcial?
+- A operação precisa ser idempotente, auditável ou aprovada por alguém?
+
+## Pesquisa ou problema sem solução definida
+
+- Se o problema desaparecesse hoje, o que mudaria concretamente?
+- O que já foi tentado, qual evidência existe e por que falhou?
+- Qual decisão a pesquisa precisa permitir e até quando?
+
+## Classificação das respostas
+
+Ao registrar, diferencie:
+
+- `CONFIRMED`: decisão explícita de autoridade competente;
+- `DELEGATED`: decisão que o usuário autorizou o planejamento a tomar;
+- `INFERRED`: inferência baseada em evidência, ainda não confirmada;
+- `PROPOSAL`: sugestão ainda não aceita;
+- `REJECTED`: opção recusada e preservada para não reaparecer;
+- questão `STRUCTURAL`: pode mudar intenção, MVP, atores, arquitetura, dados centrais ou integração;
+- questão `MINOR`: o planejamento pode resolver sem alterar esses elementos.
