@@ -2,7 +2,7 @@
 
 ## AI workflow
 
-This project uses contract `planning-delegation/v2`.
+This project uses contract `skill-team/v3`.
 
 Read first:
 
@@ -15,4 +15,4 @@ Read first:
 
 Do not use this section as a status source.
 Do not implement from historical conversation when a validated specification exists.
-Do not execute a skill different from `next_skill`.
+Do not execute a skill different from `required_skill`.

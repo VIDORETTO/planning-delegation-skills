@@ -2,7 +2,7 @@
 
 ## Identification
 
-- Workflow contract: `planning-delegation/v2`
+- Workflow contract: `skill-team/v3`
 - Plan revision: <INTEGER>
 - Brainstorm revision used: <INTEGER>
 - Generated at: <ISO_8601_TIMESTAMP>

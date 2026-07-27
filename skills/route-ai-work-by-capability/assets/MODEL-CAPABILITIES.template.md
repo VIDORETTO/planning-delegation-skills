@@ -1,5 +1,5 @@
 ---
-workflow_contract: planning-delegation/v2
+workflow_contract: skill-team/v3
 document_type: model-capabilities
 registry_revision: 1
 assessed_at: <ISO-8601>

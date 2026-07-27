@@ -1,138 +1,129 @@
 ---
 name: create-spec-driven-plan
-description: Create or repair implementation-ready, spec-driven project plans from a validated brainstorm handoff. Use when Codex must preserve product intent, formalize requirements, define contracts, phases, atomic tasks, traceability and validation, then prepare a handoff for capability-based routing without performing routing or implementation.
+description: >
+  Create or repair an implementation-ready, spec-driven plan from validated discovery artifacts
+  or a sufficiently bounded change brief. Use to formalize requirements, contracts, phases,
+  tasks, dependencies, acceptance, evidence, rollback, traceability, and change control.
+  Support compact, standard, and critical profiles. Do not choose execution models, implement
+  tasks, review code, or approve releases.
 ---
 
 # Create Spec-Driven Plan
 
-Produce a versioned planning system that another agent can execute without reconstructing product intent. This skill owns only the planning stage of `planning-delegation/v2`.
+Produce a versioned planning system that another agent can execute without reconstructing product
+intent. This skill owns only the planning stage of `skill-team/v3`.
 
 ## Load resources
 
-- Read [references/planning-method.md](references/planning-method.md) completely.
-- Copy and adapt the assets instead of inventing a parallel document system.
+- Read [references/planning-method.md](references/planning-method.md).
+- Copy and adapt assets; do not invent a parallel document system.
 - Run [scripts/validate_plan.py](scripts/validate_plan.py) after every plan change.
-- Never invoke `route-ai-work-by-capability` in this operation.
+- Never invoke routing, execution, review, or release in this operation.
 
 ## Exclusive stage ownership
 
-Execute only the stage belonging to this skill. Do not invoke, execute or mix the next skill in the same operation.
+Write only `plan/`, `PLAN-TO-ROUTING.md`, and plan fields in `PROGRESS.md`.
 
-This skill may start only when `PROGRESS.md` declares:
+Start only when `PROGRESS.md` declares `required_skill: create-spec-driven-plan` with a validated
+discovery handoff (`BRAINSTORM-TO-PLAN`, `CODEBASE-TO-PLAN`, `UX-AUDIT-TO-PLAN`, or a validated
+combination), or a compact change brief with no pending structural decisions.
 
-~~~yaml
-workflow_contract: planning-delegation/v2
-stage: BRAINSTORM
-status: BRAINSTORM_READY
-next_skill: create-spec-driven-plan
-handoff_status: READY
-~~~
-
-It also requires `handoffs/BRAINSTORM-TO-PLAN.md`, and its brainstorm revision must equal `brainstorm_revision` in `PROGRESS.md`. If the current state belongs to another skill, do not modify that stage's artifacts; report the required skill. A legacy project without v2 state must be explicitly migrated before planning.
-
-At entry, change only the operational pointer to `stage: PLAN`, `status: PLAN_IN_PROGRESS`, `active_skill: create-spec-driven-plan`, and `handoff_status: NOT_READY`. Preserve brainstorm artifacts and revisions.
+At entry set `stage: PLANNING`, `status: PLAN_IN_PROGRESS`, `stage_owner` and `writer_skill` to
+this skill, `handoff_status: NOT_READY`. Preserve discovery artifacts and revisions.
 
 At completion:
 
-1. validate all planning artifacts;
+1. validate planning artifacts for the active profile;
 2. generate `handoffs/PLAN-TO-ROUTING.md`;
-3. increment `plan_revision` and record `plan_based_on_brainstorm_revision`;
-4. update `PROGRESS.md` to `PLAN_VALIDATED`;
-5. set `next_skill: route-ai-work-by-capability` and `handoff_status: READY`;
+3. increment `plan_revision`;
+4. set `status: PLAN_VALIDATED`, `required_skill: route-ai-work-by-capability`, `handoff_status: READY`;
+5. clear `writer_skill`;
 6. stop.
+
+## Profiles
+
+| Profile | Required artifacts |
+|---|---|
+| `compact` | `PROGRESS`, `SOURCE-REGISTER`, `PLAN-MANIFEST`, `00-MASTER`, one phase with tasks, `TRACEABILITY`, `PLAN-TO-ROUTING` |
+| `standard` | compact plus applicable analysis, scope, journeys, rules, architecture, domain/data, API, security, quality, operations, roadmap, decisions/risks |
+| `critical` | standard plus threat model, migration, rollback, DR, negative/adversarial tests, release gates, strong review requirements |
+
+Profiles never weaken security controls.
 
 ## Workflow
 
-### 1. Validate and consume the brainstorm handoff
+### 1. Consume discovery
 
-Read `PROGRESS.md`, `handoffs/BRAINSTORM-TO-PLAN.md`, the active brainstorm artifact, `SOURCE-REGISTER.md`, and only then other referenced sources. Reject stale or incomplete handoffs.
+Read `PROGRESS.md`, the ready handoff(s), discovery artifacts, and `SOURCE-REGISTER.md`. Reject
+stale or incomplete handoffs. Preserve IDs (`DEC-*`, `ASM-*`, `RISK-*`, `BR-*`, `JRN-*`, `CR-*`,
+investigation evidence IDs, UX finding IDs). Formalize candidates as `REQ-*` with origin retained.
 
-In `plan/ANALYSIS.md`, record:
+### 2. Establish authority and bound the product
 
-- brainstorm revision and handoff path;
-- preserved decisions and answered questions;
-- imported assumptions;
-- rejected suggestions that remain rejected;
-- candidate requirements and their stable origins.
+Classify statements as MUST, SHOULD, MAY, INFERRED, PROPOSAL, REJECTED, or DEFERRED. Separate
+first usable release, total vision, non-goals, and future work. Define measurable release gates
+before tasks.
 
-Do not repeat answered interview questions. Preserve `DEC-*`, `ASM-*`, `RISK-*`, `BR-*`, `JRN-*` and `CR-*` IDs. When formalizing a candidate, create a `REQ-*` and retain its `CR-*` origin in traceability.
+### 3. Specify contracts to implementation-ready depth
 
-### 2. Establish authority and reconstruct intent
+Domain states, data ownership, APIs/events, security boundaries, retries, idempotency,
+observability, deletion, migration, and rollback — only as deep as the profile and risk require.
 
-Create or update `SOURCE-REGISTER.md` before making design decisions. Classify statements as MUST, SHOULD, MAY, INFERRED, PROPOSAL, REJECTED or DEFERRED. Treat prior assistant text as advisory, not authority.
+### 4. Decompose phases and tasks
 
-Analyze the repository before proposing greenfield structure. Record contradictions rather than silently resolving conflicts. Label every inference and its evidence.
+Every task needs stable ID, requirement/decision origins, state, priority, risk, executor
+`UNASSIGNED`, reviewer `NONE`, dependencies, mandatory reading, write scope, forbidden scope,
+observable objective, inputs/outputs/errors, invariants, security/privacy, expected
+implementation, tests, acceptance, rollback, evidence, and escalation conditions.
 
-### 3. Bound the product and specify contracts
+Use `plan/task-context/<TASK-ID>.md` for extensive context instead of duplicating large blocks.
+Require real before/after examples only when they reduce ambiguity — not for new files, simple
+config, docs, removals, or acceptance fully covered by tests.
 
-- Separate first usable release, total vision, non-goals and future work.
-- Define measurable release gates before tasks.
-- Specify domain states, data ownership, APIs/events, security boundaries, retries, idempotency, observability, deletion, migration and rollback only to implementation-ready depth.
-- Use defaults for non-blocking choices and decision records for material tradeoffs.
+Dependencies must exist and be acyclic. At most one `IN_PROGRESS` task. `COMPLETE` requires
+evidence. `BLOCKED` requires a blocker.
 
-### 4. Build the document system
+### 5. Traceability and continuation
 
-Under `docs/ai/<project-slug>/`, use the shared `PROGRESS.md` and create/update:
+Map source/candidate → requirement → decision → release → task → oracle → evidence. Progress
+pointer identifies active artifact, current task, next action, blockers, last validation, and
+synchronized revisions.
 
-- `SOURCE-REGISTER.md`, `CONTEXT-INDEX.md`, `GLOSSARY.md`;
-- `plan/00-MASTER.md`, `ANALYSIS.md`, `PRODUCT-SCOPE.md`, `USER-JOURNEYS.md`, `BUSINESS-RULES.md`;
-- `ARCHITECTURE.md`, `DOMAIN-DATA.md`, `API-CONTRACTS.md`, `SECURITY.md`, `OPERATIONS.md`;
-- `QUALITY-EVALUATION.md`, `ROADMAP.md`, `TRACEABILITY.md`, `DECISIONS-RISKS.md`, `REFERENCES.md`, `HISTORY.md`;
-- `plan/phases/F00.md` and later phases;
-- `plan/task-context/<TASK-ID>.md` for critical or extensive tasks;
-- `handoffs/PLAN-TO-ROUTING.md` only after validation.
+### 6. Validate and hand off
 
-`AGENTS.md` is discovery-only. `PROGRESS.md` is the sole operational pointer. Detail documents are authoritative only for their subjects. Do not duplicate mutable status in `00-MASTER.md` or `AGENTS.md`.
-
-### 5. Decompose into phases and tasks
-
-Every task must include stable ID, requirement and decision IDs, executor `UNASSIGNED`, reviewer `NONE`, state, priority, risk, rationale, mandatory reading, dependencies, write scope, non-scope, observable objective, contracts/errors, invariants, security/privacy, expected implementation, tests, acceptance, rollback, evidence and escalation conditions.
-
-Dependencies must exist and form an acyclic graph. A task must not depend on itself. Tasks may be `PENDING`, `IN_PROGRESS`, `BLOCKED`, `COMPLETE` or `CANCELLED`; at most one task is `IN_PROGRESS`. A `COMPLETE` task requires evidence. A `BLOCKED` task requires a blocker.
-
-### 6. Add traceability and deterministic continuation
-
-Map original source/candidate requirement to formal requirement, decision, release, task, oracle, security control and evidence. Every task maps to at least one requirement; every active requirement maps to a task.
-
-The progress pointer must identify the active artifact, current task, next action, blockers, last validation and synchronized revisions. The next task must exist and have complete dependencies.
-
-### 7. Validate and hand off
-
-Run:
-
-~~~text
+```text
 python skills/create-spec-driven-plan/scripts/validate_plan.py docs/ai/<slug>
-~~~
+```
 
-Generate `PLAN-TO-ROUTING.md` with plan/brainstorm revisions, counts, unassigned tasks, hard gates, mixed tasks, dependency validation, open questions, defaults, commands/results and the exact files routing may alter. Then set:
-
-~~~yaml
-stage: PLAN
-status: PLAN_VALIDATED
-active_skill: create-spec-driven-plan
-next_skill: route-ai-work-by-capability
-handoff_status: READY
-~~~
-
-Do not route tasks or implement the product.
+Then stop. Do not route or implement.
 
 ## Change control
 
-- Small change: update task and traceability, increment `plan_revision`, and invalidate routing if affected.
-- Structural change (integration, schema, actor or MVP): set `REPLAN_REQUIRED`, `next_skill: create-spec-driven-plan`.
-- Product-intent change (audience, problem or primary outcome): set `REBRAINSTORM_REQUIRED`, `next_skill: brainstorm-idea-with-user`.
+- Local detail inside contract → update task/evidence.
+- Structural gap → `REPLAN_REQUIRED`, `required_skill: create-spec-driven-plan`.
+- Intent change → return to `brainstorm-idea-with-user`.
+- Technical contradiction → return to `investigate-existing-codebase`.
+- Unapproved UX recommendation → no task until product decision.
 
-Record the classification and reason. An implementation agent must not silently choose a category.
+## Prohibitions
 
-## Output contract
-
-Report planning directory, master entrypoint, consumed brainstorm revision, plan revision, phase/task/requirement counts, validation command/result, handoff path, unresolved blockers and the next skill. Keep the user summary short and stop after handoff.
-
-## Failure rules
-
-- Do not plan from a stale or unauthorized handoff.
-- Do not overwrite brainstorm decisions or revive rejected suggestions.
-- Do not expose private chain-of-thought; provide rationale and evidence.
-- Do not leave placeholders, broken links, ambiguous task order or unverifiable acceptance.
+- Do not choose models or implement.
+- Do not overwrite discovery decisions or revive rejected suggestions.
+- Do not leave placeholders, broken links, or unverifiable acceptance in ready plans.
 - Do not mark planning artifacts as implemented features.
-- Do not repair missing product requirements or architecture during routing; return to this skill through `REPLAN_REQUIRED`.
+
+
+## Assets
+
+Copy and adapt:
+
+- [assets/MASTER.template.md](assets/MASTER.template.md)
+- [assets/PROGRESS.template.md](assets/PROGRESS.template.md)
+- [assets/PHASE.template.md](assets/PHASE.template.md)
+- [assets/ANALYSIS.template.md](assets/ANALYSIS.template.md)
+- [assets/TRACEABILITY.template.md](assets/TRACEABILITY.template.md)
+- [assets/SOURCE-REGISTER.template.md](assets/SOURCE-REGISTER.template.md)
+- [assets/TASK-CONTEXT.template.md](assets/TASK-CONTEXT.template.md)
+- [assets/PLAN-TO-ROUTING.template.md](assets/PLAN-TO-ROUTING.template.md)
+
+- [assets/PLAN-MANIFEST.template.md](assets/PLAN-MANIFEST.template.md)

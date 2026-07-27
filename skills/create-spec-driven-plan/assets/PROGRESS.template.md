@@ -1,11 +1,11 @@
 ---
-workflow_contract: planning-delegation/v2
+workflow_contract: skill-team/v3
 project_id: <PROJECT_ID>
 project_slug: <PROJECT_SLUG>
 stage: PLAN
 status: PLAN_IN_PROGRESS
-active_skill: create-spec-driven-plan
-next_skill: create-spec-driven-plan
+stage_owner: create-spec-driven-plan
+required_skill: create-spec-driven-plan
 handoff_status: NOT_READY
 brainstorm_revision: 1
 plan_revision: 0
