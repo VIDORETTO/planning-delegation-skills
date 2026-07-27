@@ -55,5 +55,5 @@ impacto real nessa tela específica.
 ## Próximos passos sugeridos
 
 Se o usuário quiser transformar estas fases em um backlog executável com tarefas, estimativas e
-sequenciamento, isso é trabalho de planejamento — sugira a skill `spec-driven-dev` (ou equivalente
+sequenciamento, isso é trabalho de planejamento — sugira a skill `create-spec-driven-plan` (ou equivalente
 disponível no ambiente) a partir deste relatório, em vez de duplicar esse trabalho aqui.

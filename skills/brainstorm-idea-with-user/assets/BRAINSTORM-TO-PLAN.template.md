@@ -1,5 +1,5 @@
 ---
-workflow_contract: planning-delegation/v2
+workflow_contract: skill-team/v3
 brainstorm_revision: <revision>
 generated_at: <ISO-8601-with-timezone>
 producer_skill: brainstorm-idea-with-user

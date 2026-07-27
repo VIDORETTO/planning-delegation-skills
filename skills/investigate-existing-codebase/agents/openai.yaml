@@ -1,0 +1,4 @@
+interface:
+  display_name: "Investigate Existing Codebase"
+  short_description: "Evidence-based technical investigation before planning"
+  default_prompt: "Use $investigate-existing-codebase to inspect this repository, capture evidence, and prepare CODEBASE-TO-PLAN without implementing or planning."

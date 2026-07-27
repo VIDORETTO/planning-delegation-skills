@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product UX Audit"
+  short_description: "Audit rendered UI/UX with evidence and coverage"
+  default_prompt: "Use $product-ux-audit to map coverage, inspect rendered screens in adaptive batches, classify findings, and prepare UX-AUDIT-TO-PLAN only for approved items."

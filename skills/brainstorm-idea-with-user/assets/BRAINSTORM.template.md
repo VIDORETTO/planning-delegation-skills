@@ -1,5 +1,5 @@
 ---
-workflow_contract: planning-delegation/v2
+workflow_contract: skill-team/v3
 project_id: <project-id>
 project_slug: <project-slug>
 brainstorm_revision: 1
