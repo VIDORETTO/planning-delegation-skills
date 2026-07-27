@@ -1,0 +1,4 @@
+interface:
+  display_name: "Routed Task Executor"
+  short_description: "Execute one dependency-ready routed task and record evidence"
+  default_prompt: "Use $execute-routed-task only when routing produced IMPLEMENTATION_READY and no other writer is active. Take the write lock, execute the smallest verified change for the next dependency-ready task, run required checks, record evidence, update PROGRESS.md, and stop on any contract, scope, or ownership problem."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Evidence Reviewer"
+  short_description: "Independently verify completed work before approving or returning it"
+  default_prompt: "Use $review-implementation-evidence only when IMPLEMENTATION-TO-REVIEW is READY. Independently verify the diff, tests, scope, contracts, security, and regression risk against the plan — do not trust the execution log alone. Classify findings, approve or request bounded changes or escalate, update PROGRESS.md, and stop. Never implement fixes yourself."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repository Skill Author"
+  short_description: "Create, update, merge, split, or audit a skill in this repository"
+  default_prompt: "Use $author-repository-skill to maintain skills/ itself: check for trigger overlap before creating a new skill, preserve the standard anatomy (SKILL.md, agents/openai.yaml, references/, assets/, scripts/validate_*.py), keep skill-team/v3 pipeline skills contract-compliant, validate every touched skill, and report the result."

@@ -1,5 +1,5 @@
 ---
-workflow_contract: planning-delegation/v2
+workflow_contract: skill-team/v3
 document_type: routing
 plan_revision: <PLAN_REVISION>
 routing_revision: <ROUTING_REVISION>

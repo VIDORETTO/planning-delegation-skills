@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "workflow_contract": "skill-team/v3",
+  "predecessor": "planning-delegation/v2",
+  "migration_tool": "scripts/migrate_v2_to_v3.py",
+  "legacy_skills": [
+    {
+      "name": "advisor-planner",
+      "status": "removed",
+      "absorbed_into": [
+        "brainstorm-idea-with-user",
+        "investigate-existing-codebase",
+        "create-spec-driven-plan",
+        "route-ai-work-by-capability"
+      ],
+      "notes": "Absorbed into investigate/create/route/execute/review. Folder removed after v3 validators passed. Do not reintroduce stubs."
+    }
+  ],
+  "incompatible_changes": [
+    {
+      "id": "next-skill-split",
+      "field": "next_skill",
+      "change": "removed_and_split",
+      "detail": "v2 'next_skill' (a single ambiguous pointer) is forbidden in skill-team/v3. It is replaced by 'required_skill' (the only skill allowed to run now) and 'successor_skill' (the skill expected after the current handoff is validated and consumed).",
+      "migration": "migrate_v2_to_v3.py infers required_skill and successor_skill from the v2 stage/status pair using a documented heuristic table, and never leaves next_skill in migrated output."
+    },
+    {
+      "id": "workflow-contract-value",
+      "field": "workflow_contract",
+      "change": "value_changed",
+      "detail": "'planning-delegation/v2' becomes 'skill-team/v3' on every migrated frontmatter block (PROGRESS.md and handoffs).",
+      "migration": "migrate_v2_to_v3.py rewrites the field on every YAML frontmatter block it touches."
+    },
+    {
+      "id": "execution-stage-added",
+      "field": "stage",
+      "change": "new_stage",
+      "detail": "v2 ended at ROUTING with an implicit, unowned implementation step. skill-team/v3 adds an explicit IMPLEMENTATION stage owned by 'execute-routed-task', with its own statuses (TASK_IN_PROGRESS, TASK_BLOCKED, TASK_COMPLETE, IMPLEMENTATION_COMPLETE).",
+      "migration": "Projects with v2 status IMPLEMENTATION_READY or later map to stage: IMPLEMENTATION, status: TASK_IN_PROGRESS (or IMPLEMENTATION_COMPLETE when v2 records show all tasks done); required_skill: execute-routed-task."
+    },
+    {
+      "id": "review-stage-added",
+      "field": "stage",
+      "change": "new_stage",
+      "detail": "v2 had no formal, independent review stage. skill-team/v3 adds REVIEW owned by 'review-implementation-evidence', gating release on REVIEW_APPROVED.",
+      "migration": "Not inferable from v2 data; migrated projects land with review_revision: 0 and require a first pass through review-implementation-evidence before release."
+    },
+    {
+      "id": "release-stage-added",
+      "field": "stage",
+      "change": "new_stage",
+      "detail": "v2 had no formal release gate. skill-team/v3 adds RELEASE owned by 'validate-release-readiness', with RELEASE_READY / RELEASED / POST_RELEASE_REVIEW_REQUIRED statuses.",
+      "migration": "Migrated projects land with release_revision: 0 and required_skill left at the correctly inferred earlier stage; release is never auto-approved by the migrator."
+    },
+    {
+      "id": "discovery-modes-split",
+      "field": "stage_owner",
+      "change": "clarified",
+      "detail": "v2 treated discovery as a single implicit step (often folded into advisor-planner or an unnamed brainstorm). skill-team/v3 defines three non-competing discovery owners: brainstorm-idea-with-user (intent), investigate-existing-codebase (technical reality), product-ux-audit (rendered UI/UX).",
+      "migration": "migrate_v2_to_v3.py does not guess which discovery mode a v2 project used; it records DISCOVERY with stage_owner left for manual confirmation when ambiguous, and never invents a value."
+    },
+    {
+      "id": "revision-fields-expanded",
+      "field": "*_revision",
+      "change": "expanded",
+      "detail": "v2 tracked plan_revision and routing_revision only. skill-team/v3 requires discovery_revision, plan_revision, routing_revision, implementation_revision, review_revision, release_revision as a full monotonic set.",
+      "migration": "migrate_v2_to_v3.py adds any missing *_revision field with a default of 0 and never decreases an existing value."
+    },
+    {
+      "id": "handoff-status-consumed",
+      "field": "handoff_status",
+      "change": "vocabulary_expanded",
+      "detail": "v2 used NOT_READY/READY. skill-team/v3 adds CONSUMED to mark a handoff a downstream skill has already read and acted on, distinct from a stale but still-READY handoff.",
+      "migration": "migrate_v2_to_v3.py leaves READY handoffs as READY; it does not infer CONSUMED without explicit evidence of downstream consumption."
+    },
+    {
+      "id": "single-writer-protocol",
+      "field": "writer_skill",
+      "change": "new_field",
+      "detail": "v2 had no explicit write-lock field. skill-team/v3 requires writer_skill (and writer_task) so only one skill holds operational write authorization at a time.",
+      "migration": "migrate_v2_to_v3.py adds writer_skill: null and writer_task: null when absent, on the assumption that no writer is currently mid-operation."
+    },
+    {
+      "id": "english-only-vocabulary",
+      "field": "*",
+      "change": "vocabulary_restricted",
+      "detail": "skill-team/v3 requires English-only IDs, states, schema fields, and contracts. Legacy Portuguese aliases (e.g. PENDENTE, EM_ANDAMENTO, CONCLUIDA) belong only inside the migrator, never in new artifacts.",
+      "migration": "migrate_v2_to_v3.py maps known Portuguese/legacy state aliases to the English vocabulary and reports any alias it cannot map instead of guessing."
+    }
+  ],
+  "platform_notes": {
+    "core_contract": "The workflow contract, SKILL.md files, catalog/*.json, contracts/*.md, and all scripts/*.py are platform-neutral: plain Markdown, flat YAML frontmatter, and Python 3.10+ stdlib only. Any agent runtime that can read local files and run Python can operate the pipeline.",
+    "adapters": {
+      "codex": "Optional. Reads SKILL.md directly; no adapter file required beyond the skill folder itself.",
+      "opencode": "Optional. Reads SKILL.md directly; treat agents/*.yaml as supplementary display metadata only, never as the source of truth for behavior.",
+      "cursor": "Optional. Skills may be exposed via Cursor's skills discovery mechanism (SKILL.md at a known path); agents/openai.yaml is not required for Cursor and is not Cursor-specific despite its filename.",
+      "note": "The 'openai.yaml' filename under each skill's agents/ folder is a legacy naming choice for a generic 'interface metadata for an agent runtime' adapter. It is optional, additive, and must never contain instructions that contradict SKILL.md."
+    }
+  }
+}

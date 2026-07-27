@@ -1,10 +1,10 @@
 # Planning method
 
-This method implements workflow contract `planning-delegation/v2`. Planning consumes a validated brainstorm handoff and produces a validated routing handoff. It never performs either adjacent stage.
+This method implements workflow contract `skill-team/v3`. Planning consumes a validated brainstorm handoff and produces a validated routing handoff. It never performs either adjacent stage.
 
 ## Stage contract
 
-Entry requires `BRAINSTORM_READY`, `next_skill: create-spec-driven-plan`, `handoff_status: READY`, and matching brainstorm revisions in `PROGRESS.md` and `BRAINSTORM-TO-PLAN.md`. Planning owns `PLAN_IN_PROGRESS` and `PLAN_VALIDATED` only. Exit requires a validated `PLAN-TO-ROUTING.md`, synchronized revisions and `next_skill: route-ai-work-by-capability`; then stop.
+Entry requires discovery ready with `required_skill: create-spec-driven-plan`, `handoff_status: READY`, and matching discovery revisions in `PROGRESS.md` and the consumed handoff (`BRAINSTORM-TO-PLAN`, `CODEBASE-TO-PLAN`, and/or `UX-AUDIT-TO-PLAN`). Planning owns `PLAN_IN_PROGRESS` and `PLAN_VALIDATED` only. Exit requires a validated `PLAN-TO-ROUTING.md`, synchronized revisions and `required_skill: route-ai-work-by-capability`; then stop.
 
 `PROGRESS.md` is the only operational pointer. `AGENTS.md` is an index, the handoff is the stage input contract, and subject documents own their detailed domains.
 

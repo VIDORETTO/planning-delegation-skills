@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the planning stage of a planning-delegation/v2 project."""
+"""Validate the planning stage of a skill-team/v3 project."""
 
 from __future__ import annotations
 
@@ -206,25 +206,77 @@ def validate() -> tuple[dict, int]:
     if not project.is_dir():
         return {"planning_dir": str(project), "errors": ["planning directory not found"], "warnings": []}, 2
     progress, fm_errors = parse_frontmatter(project / "PROGRESS.md"); errors.extend(fm_errors)
-    required_progress = {"workflow_contract", "project_id", "project_slug", "stage", "status", "active_skill", "next_skill", "handoff_status", "brainstorm_revision", "plan_revision", "routing_revision", "plan_based_on_brainstorm_revision", "active_artifact", "current_task", "next_action", "blockers", "last_validation", "updated_at"}
+    required_progress = {
+        "workflow_contract", "project_id", "project_slug", "stage", "status",
+        "handoff_status", "plan_revision", "routing_revision", "active_artifact",
+        "next_action", "blockers", "updated_at",
+    }
     errors.extend(f"PROGRESS.md missing field: {key}" for key in sorted(required_progress - progress.keys()))
-    if progress.get("workflow_contract") != "planning-delegation/v2": errors.append("unsupported workflow_contract")
-    if not args.artifact_only and progress.get("stage") not in {"BRAINSTORM", "PLAN"}: errors.append("planning skill received incompatible stage")
+    if progress.get("workflow_contract") not in {"skill-team/v3", "planning-delegation/v2"}:
+        errors.append("unsupported workflow_contract")
+    if "required_skill" not in progress and "next_skill" not in progress:
+        errors.append("PROGRESS.md missing required_skill")
+    if "stage_owner" not in progress and "active_skill" not in progress:
+        errors.append("PROGRESS.md missing stage_owner")
+    if "discovery_revision" not in progress and "brainstorm_revision" not in progress:
+        errors.append("PROGRESS.md missing discovery_revision")
+    if "active_task" not in progress and "current_task" not in progress:
+        errors.append("PROGRESS.md missing active_task")
+    if "last_validation_result" not in progress and "last_validation" not in progress:
+        errors.append("PROGRESS.md missing last_validation_result")
+    if not args.artifact_only and progress.get("stage") not in {"BRAINSTORM", "PLAN", "DISCOVERY", "PLANNING"}:
+        errors.append("planning skill received incompatible stage")
     status = progress.get("status"); validated = status == "PLAN_VALIDATED"
-    allowed_status = {"BRAINSTORM_READY", "PLAN_IN_PROGRESS", "PLAN_VALIDATED", "REPLAN_REQUIRED"}
+    allowed_status = {"BRAINSTORM_READY", "DISCOVERY_READY", "PLAN_IN_PROGRESS", "PLAN_VALIDATED", "REPLAN_REQUIRED"}
     if not args.artifact_only and status not in allowed_status: errors.append(f"incompatible planning status: {status}")
     if progress.get("updated_at"):
         try: datetime.fromisoformat(str(progress["updated_at"]))
         except ValueError: errors.append("updated_at is not valid ISO-8601")
 
-    required_docs = ["00-MASTER.md", "ANALYSIS.md", "PRODUCT-SCOPE.md", "USER-JOURNEYS.md", "BUSINESS-RULES.md", "ARCHITECTURE.md", "DOMAIN-DATA.md", "API-CONTRACTS.md", "SECURITY.md", "OPERATIONS.md", "QUALITY-EVALUATION.md", "ROADMAP.md", "TRACEABILITY.md", "DECISIONS-RISKS.md", "REFERENCES.md", "HISTORY.md"]
+    profile = str(progress.get("workflow_profile") or "standard").lower()
+    if profile not in {"compact", "standard", "critical"}:
+        errors.append(f"invalid workflow_profile: {profile}")
+        profile = "standard"
+
+    compact_docs = ["00-MASTER.md", "TRACEABILITY.md", "PLAN-MANIFEST.md"]
+    standard_docs = compact_docs + [
+        "ANALYSIS.md", "PRODUCT-SCOPE.md", "USER-JOURNEYS.md", "BUSINESS-RULES.md",
+        "ARCHITECTURE.md", "DOMAIN-DATA.md", "API-CONTRACTS.md", "SECURITY.md",
+        "OPERATIONS.md", "QUALITY-EVALUATION.md", "ROADMAP.md", "DECISIONS-RISKS.md",
+        "REFERENCES.md", "HISTORY.md",
+    ]
+    critical_docs = standard_docs + ["THREAT-MODEL.md", "MIGRATION.md", "ROLLBACK.md", "RELEASE-GATES.md"]
+    if profile == "compact":
+        required_docs = compact_docs
+    elif profile == "critical":
+        required_docs = critical_docs
+    else:
+        required_docs = standard_docs
+
     for name in required_docs:
-        if not (plan / name).is_file(): errors.append(f"missing core document: plan/{name}")
-    for name in ["SOURCE-REGISTER.md", "CONTEXT-INDEX.md", "GLOSSARY.md"]:
-        if not (project / name).is_file(): errors.append(f"missing shared document: {name}")
+        if not (plan / name).is_file():
+            errors.append(f"missing core document for profile={profile}: plan/{name}")
+    shared_required = ["SOURCE-REGISTER.md"]
+    if profile != "compact":
+        shared_required.extend(["CONTEXT-INDEX.md", "GLOSSARY.md"])
+    for name in shared_required:
+        if not (project / name).is_file():
+            errors.append(f"missing shared document: {name}")
+    if profile == "compact" and not (plan / "PLAN-MANIFEST.md").is_file() and (plan / "00-MASTER.md").is_file():
+        warnings.append("compact profile should include plan/PLAN-MANIFEST.md")
 
     md_files = sorted(project.rglob("*.md")); phase_files = sorted((plan / "phases").glob("*.md")) if (plan / "phases").is_dir() else []
+    if validated and not phase_files:
+        errors.append("validated plan requires at least one phase file under plan/phases/")
+    if "workflow_profile" not in progress:
+        warnings.append("PROGRESS.md missing workflow_profile; defaulting to standard")
+
     tasks = parse_tasks(phase_files, project); errors.extend(local_link_errors(md_files, project)); errors.extend(graph_errors(tasks))
+    if validated and (progress.get("required_skill") or progress.get("next_skill")) == "route-ai-work-by-capability":
+        for task in tasks:
+            if (task.executor or "").upper() not in {"UNASSIGNED", ""}:
+                warnings.append(f"plan ready for routing but task executor is not UNASSIGNED: {task.task_id}")
+
     counts = Counter(task.task_id for task in tasks)
     for task_id, count in counts.items():
         if count != 1: errors.append(f"task ID occurs {count} times: {task_id}")
@@ -276,7 +328,11 @@ def validate() -> tuple[dict, int]:
 
     output = project / "handoffs" / "PLAN-TO-ROUTING.md"
     if validated:
-        if progress.get("stage") != "PLAN" or progress.get("active_skill") != "create-spec-driven-plan" or progress.get("next_skill") != "route-ai-work-by-capability" or progress.get("handoff_status") != "READY": errors.append("PLAN_VALIDATED transition fields are incompatible")
+        stage_owner = progress.get("stage_owner") or progress.get("active_skill")
+        required_skill = progress.get("required_skill") or progress.get("next_skill")
+        stage_ok = progress.get("stage") in {"PLAN", "PLANNING"}
+        if not stage_ok or stage_owner != "create-spec-driven-plan" or required_skill != "route-ai-work-by-capability" or progress.get("handoff_status") != "READY":
+            errors.append("PLAN_VALIDATED transition fields are incompatible")
         if progress.get("plan_based_on_brainstorm_revision") != progress.get("brainstorm_revision"): errors.append("validated plan is not based on current brainstorm revision")
         out_plan_rev = handoff_revision(output, "Plan revision")
         out_brain_rev = handoff_revision(output, "Brainstorm revision used")

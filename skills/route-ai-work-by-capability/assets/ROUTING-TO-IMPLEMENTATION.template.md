@@ -1,5 +1,5 @@
 ---
-workflow_contract: planning-delegation/v2
+workflow_contract: skill-team/v3
 document_type: routing-to-implementation-handoff
 plan_revision: <PLAN_REVISION>
 routing_revision: <ROUTING_REVISION>
@@ -76,8 +76,8 @@ Stop on missing/contradictory contract, schema change, security ambiguity, concu
 ## Scope-change protocol
 
 - Small/local: update task and traceability; increment plan revision and reroute if affected.
-- Structural: `REPLAN_REQUIRED` and `next_skill: create-spec-driven-plan`.
-- Product intent: `REBRAINSTORM_REQUIRED` and `next_skill: brainstorm-idea-with-user`.
+- Structural: `REPLAN_REQUIRED` and `required_skill: create-spec-driven-plan`.
+- Product intent: `REBRAINSTORM_REQUIRED` and `required_skill: brainstorm-idea-with-user`.
 
 ## Handoff authorization
 
