@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate planning-delegation/v2 routing semantics and ownership.
+"""Validate skill-team/v3 routing semantics and ownership.
 
 Preferred usage:
     python validate_routing.py docs/ai/<project-slug>
@@ -111,6 +111,30 @@ def find_field(block: list[str], label: str) -> str | None:
     return None
 
 
+def section_body(block: list[str], title: str) -> str:
+    """Extract #### <title> body until the next #### heading."""
+    text = "\n".join(block)
+    pattern = rf"(?ims)^####\s+{re.escape(title)}\s*$\n(.*?)(?=^####\s+|\Z)"
+    match = re.search(pattern, text)
+    return match.group(1).strip() if match else ""
+
+
+def parse_dependencies(block: list[str], task_id: str) -> list[str]:
+    """Prefer #### Dependencies / #### Dependências; fall back to inline field."""
+    body = section_body(block, "Dependencies") or section_body(block, "Dependências")
+    if body:
+        deps = [x for x in re.findall(r"[A-Z][A-Z0-9]*-\d{3}", body) if x != task_id]
+        if re.search(rf"(?im)^\s*-\s*{re.escape(task_id)}\s*$", body):
+            deps.append(task_id)
+        if body.upper().strip() in {"NONE", "- NONE", "N/A"} or (
+            not deps and re.search(r"(?im)\bNONE\b", body)
+        ):
+            return []
+        return deps
+    dep_value = find_field(block, "Dependencies") or find_field(block, "Dependências") or "NONE"
+    return csv_ids(dep_value)
+
+
 def parse_tasks(root: Path) -> list[Task]:
     result: list[Task] = []
     for path in sorted(root.rglob("*.md")):
@@ -122,10 +146,11 @@ def parse_tasks(root: Path) -> list[Task]:
         for pos, (index, match) in enumerate(headings):
             end = headings[pos + 1][0] if pos + 1 < len(headings) else len(lines)
             block = lines[index + 1:end]
+            task_id = match.group("id")
             executor = find_field(block, "Executor") or find_field(block, "Owner")
             reviewer = find_field(block, "Reviewer")
-            dep_value = find_field(block, "Dependencies") or find_field(block, "Dependências") or "NONE"
-            result.append(Task(match.group("id"), executor, reviewer, csv_ids(dep_value), path.relative_to(root).as_posix(), index + 1))
+            deps = parse_dependencies(block, task_id)
+            result.append(Task(task_id, executor, reviewer, deps, path.relative_to(root).as_posix(), index + 1))
     return result
 
 
@@ -277,7 +302,7 @@ def validate_legacy(tasks_root: Path, routing_path: Path, allowed: set[str] | No
 
 
 def report(errors: list[str], task_count: int, route_count: int) -> int:
-    print("workflow_contract=planning-delegation/v2")
+    print("workflow_contract=skill-team/v3")
     print(f"tasks={task_count} routed={route_count}")
     for error in errors: print(f"error: {error}")
     print("ROUTING VALID" if not errors else "ROUTING INVALID")
@@ -287,25 +312,51 @@ def report(errors: list[str], task_count: int, route_count: int) -> int:
 def validate_workflow(root: Path) -> int:
     progress = root / "PROGRESS.md"
     routing = root / "plan" / "ROUTING.md"
+    if not routing.is_file():
+        routing = root / "routing" / "ROUTING.md"
     models_path = root / "MODEL-CAPABILITIES.md"
+    if not models_path.is_file():
+        models_path = root / "routing" / "MODEL-CAPABILITIES.md"
     handoff = root / "handoffs" / "ROUTING-TO-IMPLEMENTATION.md"
     tasks_root = root / "plan"
     errors: list[str] = []
     for path in (progress, routing, models_path, handoff, tasks_root):
-        if not path.exists(): errors.append(f"required path missing: {path.relative_to(root)}")
+        if not path.exists(): errors.append(f"required path missing: {path.relative_to(root) if path.is_absolute() or root in path.parents else path}")
     if errors: return report(errors, 0, 0)
 
     pf, rf, hf, mf = frontmatter(progress), frontmatter(routing), frontmatter(handoff), frontmatter(models_path)
-    for name, data in (("PROGRESS.md", pf), ("plan/ROUTING.md", rf), ("handoff", hf), ("MODEL-CAPABILITIES.md", mf)):
-        if data.get("workflow_contract") != "planning-delegation/v2": errors.append(f"{name}: invalid workflow_contract")
+    for name, data in (("PROGRESS.md", pf), ("ROUTING.md", rf), ("handoff", hf), ("MODEL-CAPABILITIES.md", mf)):
+        if data.get("workflow_contract") not in {"skill-team/v3", "planning-delegation/v2"}:
+            errors.append(f"{name}: invalid workflow_contract")
     plan_rev = pf.get("plan_revision")
     routing_rev = pf.get("routing_revision")
     for name, data in (("routing", rf), ("handoff", hf)):
-        if data.get("plan_revision") != plan_rev or data.get("routing_based_on_plan_revision") != plan_rev: errors.append(f"{name}: plan revision mismatch")
-        if data.get("routing_revision") != routing_rev: errors.append(f"{name}: routing revision mismatch")
-    expected_progress = {"stage": "ROUTING", "status": "IMPLEMENTATION_READY", "active_skill": "route-ai-work-by-capability", "next_skill": "implementation", "handoff_status": "READY"}
-    for key, value in expected_progress.items():
-        if pf.get(key) != value: errors.append(f"PROGRESS.md: expected {key}={value}, got {pf.get(key)!r}")
+        if data.get("plan_revision") and data.get("plan_revision") != plan_rev:
+            errors.append(f"{name}: plan revision mismatch")
+        if data.get("routing_revision") and data.get("routing_revision") != routing_rev:
+            errors.append(f"{name}: routing revision mismatch")
+        if data.get("routing_based_on_plan_revision") and data.get("routing_based_on_plan_revision") != plan_rev:
+            errors.append(f"{name}: routing_based_on_plan_revision mismatch")
+    # v3 preferred fields, with v2 aliases accepted during migration
+    required_skill = pf.get("required_skill") or pf.get("next_skill")
+    stage_owner = pf.get("stage_owner") or pf.get("active_skill")
+    expected = {
+        "stage": pf.get("stage") in {"ROUTING", "PLAN"},
+        "status": pf.get("status") == "IMPLEMENTATION_READY",
+        "owner": stage_owner == "route-ai-work-by-capability",
+        "required": required_skill in {"execute-routed-task", "implementation"},
+        "handoff": pf.get("handoff_status") == "READY",
+    }
+    if not expected["stage"]:
+        errors.append(f"PROGRESS.md: unexpected stage={pf.get('stage')!r}")
+    if not expected["status"]:
+        errors.append(f"PROGRESS.md: expected status=IMPLEMENTATION_READY, got {pf.get('status')!r}")
+    if not expected["owner"]:
+        errors.append(f"PROGRESS.md: expected stage_owner/active_skill=route-ai-work-by-capability, got {stage_owner!r}")
+    if not expected["required"]:
+        errors.append(f"PROGRESS.md: expected required_skill=execute-routed-task, got {required_skill!r}")
+    if not expected["handoff"]:
+        errors.append(f"PROGRESS.md: expected handoff_status=READY, got {pf.get('handoff_status')!r}")
     active_artifact = pf.get("active_artifact", "").replace("\\", "/")
     if not active_artifact.endswith("handoffs/ROUTING-TO-IMPLEMENTATION.md"):
         errors.append("PROGRESS.md: active_artifact must point to ROUTING-TO-IMPLEMENTATION.md")

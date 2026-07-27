@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vidoretto.dev/schemas/skill-team/v3/task.schema.json",
+  "title": "skill-team/v3 task fields",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "task_id",
+    "title",
+    "state",
+    "executor",
+    "reviewer",
+    "dependencies",
+    "write_scope",
+    "forbidden_scope"
+  ],
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-\\d{3}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "state": {
+      "enum": ["PENDING", "IN_PROGRESS", "BLOCKED", "COMPLETE", "CANCELLED"]
+    },
+    "priority": { "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+    "risk": { "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+    "executor": { "type": "string", "minLength": 1 },
+    "reviewer": { "type": "string", "minLength": 1 },
+    "requirement_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^REQ-\\d{3}$" }
+    },
+    "decision_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^DEC-\\d{3}$" }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-\\d{3}$" }
+    },
+    "write_scope": {
+      "type": "object",
+      "properties": {
+        "files": { "type": "array", "items": { "type": "string" } },
+        "components": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "forbidden_scope": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

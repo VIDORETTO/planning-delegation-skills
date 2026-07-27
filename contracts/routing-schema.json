@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vidoretto.dev/schemas/skill-team/v3/routing.schema.json",
+  "title": "skill-team/v3 routing assignment",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "task_id",
+    "executor",
+    "reviewer",
+    "review_mode",
+    "batch",
+    "hard_gate",
+    "score",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-\\d{3}$" },
+    "executor": { "type": "string", "pattern": "^MODEL-[A-Z0-9_.-]+$" },
+    "reviewer": { "type": "string" },
+    "review_mode": {
+      "enum": [
+        "NONE",
+        "SAMPLE",
+        "REQUIRED_BEFORE_COMPLETE",
+        "REQUIRED_BEFORE_RELEASE",
+        "ADVERSARIAL_REVIEW"
+      ]
+    },
+    "batch": { "type": "string", "minLength": 1 },
+    "hard_gate": { "type": "string" },
+    "score": { "type": ["integer", "null"], "minimum": 0 },
+    "confidence": { "enum": ["HIGH", "MEDIUM", "LOW"] },
+    "locks": { "type": "array", "items": { "type": "string" } },
+    "rationale": { "type": "string", "minLength": 1 }
+  }
+}
