@@ -1,0 +1,28 @@
+name: Validate skills
+
+on:
+  pull_request:
+  push:
+    branches: [main, "restructure/**"]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Structure and catalog
+        run: |
+          python scripts/validate_catalog.py
+          python scripts/check_local_links.py
+          python scripts/check_skill_references.py
+          python scripts/detect_trigger_overlap.py
+          python scripts/detect_orphan_resources.py
+      - name: Unit and repository validation
+        run: python scripts/validate_repository.py

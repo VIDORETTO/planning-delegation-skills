@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "categories": {
+    "discovery": "Understand product intent, technical reality, or UX evidence before a plan exists. Discovery modes do not compete with each other.",
+    "product": "Evaluate the visual/UI/UX quality of a rendered, navigable digital product from live evidence.",
+    "planning": "Turn a validated discovery handoff (or a bounded change brief) into an implementation-ready, spec-driven plan.",
+    "orchestration": "Assign validated plan tasks to registered AI models and reviewers by capability, risk, and cost.",
+    "execution": "Implement exactly one routed task against its contract and record evidence.",
+    "quality": "Independently verify implementation evidence against the plan and routing contracts before release.",
+    "release": "Confirm release gates, checklists, and readiness before shipping and after release.",
+    "maintenance": "Author, repair, or validate skills, catalog entries, and repository-level contracts."
+  }
+}

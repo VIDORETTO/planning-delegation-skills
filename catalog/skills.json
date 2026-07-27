@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "name": "brainstorm-idea-with-user",
+      "category": "discovery",
+      "status": "stable",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "raw_idea_or_ambiguous_request",
+        "existing_progress_pointer_for_resume"
+      ],
+      "produces": [
+        "docs/ai/<slug>/discovery/brainstorm/BRAINSTORM.md",
+        "docs/ai/<slug>/handoffs/BRAINSTORM-TO-PLAN.md"
+      ],
+      "standalone": true,
+      "platform_neutral": true
+    },
+    {
+      "name": "investigate-existing-codebase",
+      "category": "discovery",
+      "status": "draft",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "existing_codebase_access",
+        "bug_report_or_change_request"
+      ],
+      "produces": [
+        "docs/ai/<slug>/discovery/investigation/CODEBASE-INVESTIGATION.md",
+        "docs/ai/<slug>/handoffs/CODEBASE-TO-PLAN.md"
+      ],
+      "standalone": true,
+      "platform_neutral": true,
+      "notes": "SKILL.md not yet authored; folder scaffold (agents/, assets/, references/, scripts/) exists. Tracked so the catalog and validators are ready before content lands."
+    },
+    {
+      "name": "product-ux-audit",
+      "category": "product",
+      "status": "stable",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "live_product_access",
+        "controlled_screen_set",
+        "navigable_design_source",
+        "executable_local_preview"
+      ],
+      "produces": [
+        "docs/ai/<slug>/discovery/ux/SITEMAP.md",
+        "docs/ai/<slug>/discovery/ux/COVERAGE.md",
+        "docs/ai/<slug>/discovery/ux/UX-AUDIT.md",
+        "docs/ai/<slug>/handoffs/UX-AUDIT-TO-PLAN.md"
+      ],
+      "standalone": true,
+      "platform_neutral": true
+    },
+    {
+      "name": "create-spec-driven-plan",
+      "category": "planning",
+      "status": "stable",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "brainstorm_to_plan_handoff",
+        "codebase_to_plan_handoff",
+        "ux_audit_to_plan_handoff",
+        "compact_change_brief_without_pending_structural_decisions"
+      ],
+      "produces": [
+        "docs/ai/<slug>/plan/**",
+        "docs/ai/<slug>/handoffs/PLAN-TO-ROUTING.md"
+      ],
+      "standalone": true,
+      "platform_neutral": true
+    },
+    {
+      "name": "route-ai-work-by-capability",
+      "category": "orchestration",
+      "status": "stable",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "plan_to_routing_handoff",
+        "registered_model_capabilities"
+      ],
+      "produces": [
+        "docs/ai/<slug>/routing/ROUTING.md",
+        "docs/ai/<slug>/routing/MODEL-CAPABILITIES.md",
+        "docs/ai/<slug>/handoffs/ROUTING-TO-IMPLEMENTATION.md"
+      ],
+      "standalone": false,
+      "platform_neutral": true
+    },
+    {
+      "name": "execute-routed-task",
+      "category": "execution",
+      "status": "draft",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "routing_to_implementation_handoff",
+        "assigned_task_id"
+      ],
+      "produces": [
+        "implementation_evidence_per_task",
+        "docs/ai/<slug>/handoffs/IMPLEMENTATION-TO-REVIEW.md"
+      ],
+      "standalone": false,
+      "platform_neutral": true,
+      "notes": "SKILL.md not yet authored; folder scaffold exists."
+    },
+    {
+      "name": "review-implementation-evidence",
+      "category": "quality",
+      "status": "draft",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "implementation_to_review_handoff",
+        "implementation_evidence_per_task"
+      ],
+      "produces": [
+        "docs/ai/<slug>/review/REVIEW.md",
+        "docs/ai/<slug>/handoffs/REVIEW-TO-RELEASE.md",
+        "docs/ai/<slug>/handoffs/REVIEW-TO-IMPLEMENTATION.md"
+      ],
+      "standalone": false,
+      "platform_neutral": true,
+      "notes": "SKILL.md not yet authored; folder scaffold exists."
+    },
+    {
+      "name": "validate-release-readiness",
+      "category": "release",
+      "status": "draft",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "review_to_release_handoff",
+        "release_checklist_profile"
+      ],
+      "produces": [
+        "docs/ai/<slug>/release/RELEASE-READINESS.md",
+        "docs/ai/<slug>/PROGRESS.md#release_revision"
+      ],
+      "standalone": false,
+      "platform_neutral": true,
+      "notes": "SKILL.md not yet authored; folder scaffold exists."
+    },
+    {
+      "name": "author-repository-skill",
+      "category": "maintenance",
+      "status": "stable",
+      "workflow_contracts": [
+        "skill-team/v3"
+      ],
+      "accepts": [
+        "skill_authoring_request",
+        "existing_skill_repair_request"
+      ],
+      "produces": [
+        "skills/<name>/SKILL.md",
+        "skills/<name>/agents/openai.yaml",
+        "catalog/skills.json#entry"
+      ],
+      "standalone": true,
+      "platform_neutral": true,
+      "notes": "SKILL.md not yet authored; folder scaffold exists. Owns catalog registration for new skills once implemented."
+    }
+  ],
+  "legacy_pending_removal": [],
+  "legacy_removed": [
+    "advisor-planner"
+  ]
+}

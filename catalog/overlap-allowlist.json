@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "allowed_overlaps": [
+    {
+      "skills": ["brainstorm-idea-with-user", "investigate-existing-codebase"],
+      "reason": "Both are discovery-stage entry points that can be triggered by an ambiguous 'look into this' request. brainstorm-idea-with-user owns product intent and scope discovery; investigate-existing-codebase owns technical/codebase root-cause discovery. skill-team/v3 defines discovery as non-competing modes, so shared discovery vocabulary (idea, explore, understand, existing) is intentional and must not be flagged as a conflict."
+    },
+    {
+      "skills": ["brainstorm-idea-with-user", "product-ux-audit"],
+      "reason": "Both can be triggered by a generic 'review this' or 'evaluate this' request. Disambiguated by evidence source: brainstorm-idea-with-user works from conversation/intent before a product necessarily exists in a reviewable state; product-ux-audit requires a real, rendered, navigable product. Intentional discovery-mode overlap, not a conflict."
+    },
+    {
+      "skills": ["investigate-existing-codebase", "product-ux-audit"],
+      "reason": "Both inspect something that already exists. investigate-existing-codebase targets source code and technical root cause; product-ux-audit targets rendered UI/UX only and is explicitly out of scope for backend/logic issues. Intentional discovery-mode overlap, not a conflict."
+    }
+  ]
+}
