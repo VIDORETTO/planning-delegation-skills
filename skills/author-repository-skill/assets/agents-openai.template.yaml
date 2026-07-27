@@ -1,0 +1,4 @@
+interface:
+  display_name: "<Human name>"
+  short_description: "<One line, under ~80 characters>"
+  default_prompt: "Use $<skill-name> only when <entry condition>. <What it must do before writing anything>. <What it produces>. <Its stop condition>."

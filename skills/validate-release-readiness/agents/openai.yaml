@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Readiness Validator"
+  short_description: "Decide release readiness from evidence, never by doing the missing work"
+  default_prompt: "Use $validate-release-readiness only when REVIEW-TO-RELEASE (or an explicitly waived review handoff) is READY. Evaluate every applicable release gate with cited evidence, decide RELEASE_READY or RELEASE_BLOCKED, update PROGRESS.md, and stop. Never deploy, implement missing work, or weaken a gate to approve."
