@@ -15,11 +15,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
+REPOSITORY_SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
+if str(REPOSITORY_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_SCRIPTS))
+from workflow_contract import validate_handoff as validate_shared_handoff, validate_progress as validate_shared_progress
+
 CONTRACT = "skill-team/v3"
 SKILL = "validate-release-readiness"
 ALLOWED_STATUSES = {
-    "RELEASE_REVIEW_REQUIRED", "RELEASE_BLOCKED", "RELEASE_READY", "RELEASED",
-    "POST_RELEASE_REVIEW_REQUIRED",
+    "RELEASE_REVIEW_REQUIRED", "RELEASE_REVIEW_IN_PROGRESS", "RELEASE_BLOCKED", "RELEASE_READY", "RELEASED",
+    "POST_RELEASE_REVIEW_REQUIRED", "POST_RELEASE_REVIEW_IN_PROGRESS",
 }
 GATE_ROW_RE = re.compile(r"^\|\s*(?P<gate>[^|]+?)\s*\|\s*(?P<result>PASS|FAIL|ACCEPTED_RISK|N/A)\s*\|\s*(?P<evidence>[^|]*?)\s*\|\s*$")
 PLACEHOLDER_RE = re.compile(r"<[^>\n]+>|\b(?:TBD|TODO|FIXME)\b", re.IGNORECASE)
@@ -100,6 +105,31 @@ def validate_no_next_skill(text: str, path: Path, report: Report) -> None:
         report.error(f"'next_skill' is forbidden in skill-team/v3 artifacts: {path}")
 
 
+def table_records(path: Path, required: set[str]) -> list[dict[str, str]]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    for index, line in enumerate(lines):
+        header = [cell.strip() for cell in line.strip().strip("|").split("|")] if line.strip().startswith("|") else []
+        if not required.issubset(header):
+            continue
+        records = []
+        for row_line in lines[index + 2:]:
+            if not row_line.strip().startswith("|"):
+                break
+            row = [cell.strip() for cell in row_line.strip().strip("|").split("|")]
+            if len(row) == len(header):
+                records.append(dict(zip(header, row)))
+        return records
+    return []
+
+
+def evidence_resolves(evidence: str, base: Path, decision: Path) -> bool:
+    """Evidence is either a recorded command result or a path that exists locally."""
+    if evidence.startswith("command:"):
+        return "PASS" in evidence.upper() or "FAIL" in evidence.upper()
+    target = evidence.strip().strip("`").split("#", 1)[0]
+    return bool(target) and ((base / target).resolve().exists() or (decision.parent / target).resolve().exists())
+
+
 def parse_gates(text: str) -> list[dict[str, str]]:
     gates: list[dict[str, str]] = []
     for line in text.splitlines():
@@ -111,6 +141,31 @@ def parse_gates(text: str) -> list[dict[str, str]]:
             continue
         gates.append({"gate": gate, "result": match.group("result"), "evidence": match.group("evidence").strip()})
     return gates
+
+
+def validate_accepted_risks(text: str, gates: list[dict[str, str]]) -> list[str]:
+    """Accepted risks need accountable, time-bounded dispositions."""
+    accepted = {gate["gate"].lower() for gate in gates if gate["result"] == "ACCEPTED_RISK"}
+    if not accepted:
+        return []
+    errors: list[str] = []
+    rows = []
+    for line in text.splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) == 6 and cells[0] not in {"ID", "---"} and cells[0].startswith("RISK-"):
+            rows.append(cells)
+    covered = set()
+    for risk_id, gate, rationale, owner, review, non_waivable in rows:
+        covered.add(gate.lower())
+        if not all((rationale, owner, review)):
+            errors.append(f"accepted risk {risk_id} lacks rationale, owner, or expiration/review condition")
+        if gate.lower() in NON_WAIVABLE_GATES and non_waivable.upper() != "YES":
+            errors.append(f"accepted risk {risk_id} lacks non-waivable gate confirmation")
+    for gate in accepted - covered:
+        errors.append(f"ACCEPTED_RISK gate lacks accepted-risk register entry: {gate}")
+    return errors
 
 
 NON_WAIVABLE_GATES = {"security and privacy", "migration and rollback"}
@@ -127,6 +182,8 @@ def main(argv: list[str] | None = None) -> int:
         "progress": base / "PROGRESS.md",
         "decision": base / "release" / "RELEASE-READINESS.md",
         "post_release": base / "release" / "POST-RELEASE.md",
+        "review_input": base / "handoffs" / "REVIEW-TO-RELEASE.md",
+        "waived_input": base / "handoffs" / "IMPLEMENTATION-TO-RELEASE.md",
     }
     if not paths["progress"].is_file():
         report.error(f"missing required document: {paths['progress']}")
@@ -134,12 +191,42 @@ def main(argv: list[str] | None = None) -> int:
     progress, _ = frontmatter(paths["progress"], report) if paths["progress"].is_file() else ({}, "")
     status = progress.get("status")
 
-    needs_decision = status in {"RELEASE_READY", "RELEASE_BLOCKED"}
+    needs_decision = status in {"RELEASE_REVIEW_IN_PROGRESS", "RELEASE_READY", "RELEASE_BLOCKED"}
     if needs_decision and not paths["decision"].is_file():
         report.error(f"missing required document: {paths['decision']}")
     decision, decision_body = frontmatter(paths["decision"], report) if paths["decision"].is_file() else ({}, "")
+    inputs = [path for path in (paths["review_input"], paths["waived_input"]) if path.is_file()]
+    if status in {"RELEASE_REVIEW_REQUIRED", "RELEASE_REVIEW_IN_PROGRESS"}:
+        if len(inputs) != 1:
+            report.error("release evaluation requires exactly one review-to-release or implementation-to-release handoff")
+        else:
+            handoff, _ = frontmatter(inputs[0], report)
+            _, handoff_body = frontmatter(inputs[0], report)
+            report.errors.extend(validate_shared_handoff({key: "null" if value is None else str(value) for key, value in handoff.items()}, handoff_body))
+            expected_type = "review-to-release" if inputs[0] == paths["review_input"] else "implementation-to-release"
+            if handoff.get("workflow_contract") != CONTRACT or handoff.get("handoff_type") != expected_type:
+                report.error("release input handoff has an invalid contract or type")
+            if handoff.get("consumer_skill") != SKILL or handoff.get("handoff_status") != "READY" or handoff.get("validation_result") != "PASS":
+                report.error("release input handoff must target release validation and be READY with PASS")
+            if inputs[0] == paths["review_input"]:
+                if handoff.get("output_revision") != progress.get("review_revision"):
+                    report.error("REVIEW-TO-RELEASE.md is stale for review_revision")
+                if handoff.get("input_revision") != progress.get("implementation_revision"):
+                    report.error("REVIEW-TO-RELEASE.md is stale for implementation_revision")
+            elif handoff.get("output_revision") != progress.get("implementation_revision") or handoff.get("input_revision") != progress.get("routing_revision"):
+                report.error("IMPLEMENTATION-TO-RELEASE.md has stale routing or implementation revision")
+            routing = base / "routing" / "ROUTING.md"
+            if not routing.is_file():
+                report.error("missing strict routing policy for release input")
+            else:
+                routes = table_records(routing, {"Task", "Review mode"})
+                if not routes:
+                    report.error("ROUTING.md lacks canonical review policy")
+                elif any(row["Review mode"] != "NONE" for row in routes) != (inputs[0] == paths["review_input"]):
+                    report.error("release input does not match routing review-required or review-waived policy")
 
     if progress:
+        report.errors.extend(validate_shared_progress({key: "null" if value is None else str(value) for key, value in progress.items()}))
         require_keys(progress, (
             "workflow_contract", "project_id", "project_slug", "stage", "status",
             "required_skill", "successor_skill", "handoff_status", "release_revision",
@@ -150,12 +237,21 @@ def main(argv: list[str] | None = None) -> int:
             report.error(f"PROGRESS.md workflow_contract must be '{CONTRACT}'")
         if progress.get("stage") != "RELEASE":
             report.error(f"PROGRESS.md stage must be 'RELEASE', got '{progress.get('stage')}'")
+        if progress.get("stage_owner") != SKILL:
+            report.error("PROGRESS.md stage_owner must be validate-release-readiness")
         if status not in ALLOWED_STATUSES:
             report.error(f"invalid release status: {status}")
         if status == "RELEASE_READY" and progress.get("required_skill") != "NONE":
             report.error("required_skill must be 'NONE' when RELEASE_READY (a human deploys)")
+        if status in {"RELEASE_REVIEW_REQUIRED", "RELEASE_REVIEW_IN_PROGRESS", "RELEASE_BLOCKED"} and progress.get("required_skill") != SKILL:
+            report.error(f"required_skill must be '{SKILL}' during release evaluation")
         if status == "RELEASE_BLOCKED" and progress.get("required_skill") in (None, "", "NONE"):
             report.error("RELEASE_BLOCKED must name a required_skill to resolve the blocker")
+        if status == "RELEASE_REVIEW_IN_PROGRESS":
+            if progress.get("writer_skill") != SKILL or progress.get("writer_task") is not None:
+                report.error("RELEASE_REVIEW_IN_PROGRESS requires only the release validator writer lock")
+        elif progress.get("writer_skill") is not None or progress.get("writer_task") is not None:
+            report.error("only RELEASE_REVIEW_IN_PROGRESS may hold a release writer lock")
 
     if decision:
         require_keys(decision, (
@@ -164,6 +260,8 @@ def main(argv: list[str] | None = None) -> int:
         ), paths["decision"], report)
         if decision.get("workflow_contract") != CONTRACT:
             report.error(f"RELEASE-READINESS.md uses the wrong workflow contract: {paths['decision']}")
+        if decision.get("release_revision") != progress.get("release_revision"):
+            report.error("RELEASE-READINESS.md is stale for release_revision")
         validate_headings(decision_body, REQUIRED_DECISION_HEADINGS, paths["decision"], report)
         validate_links(decision_body, paths["decision"], report)
         gates = parse_gates(decision_body)
@@ -174,6 +272,11 @@ def main(argv: list[str] | None = None) -> int:
         non_waivable_failed = [g for g in gates if g["gate"].lower() in NON_WAIVABLE_GATES and g["result"] == "FAIL"]
         if unevidenced:
             report.error(f"gate marked PASS/ACCEPTED_RISK without evidence citation: {[g['gate'] for g in unevidenced]}")
+        unresolved = [g["gate"] for g in gates if g["result"] in {"PASS", "ACCEPTED_RISK"} and g["evidence"] and not evidence_resolves(g["evidence"], base, paths["decision"])]
+        if unresolved:
+            report.error(f"gate evidence does not resolve to a local artifact or recorded command: {unresolved}")
+        for error in validate_accepted_risks(decision_body, gates):
+            report.error(error)
         if decision.get("decision") == "RELEASE_READY":
             if failing:
                 report.error(f"decision is RELEASE_READY but gates still FAIL: {[g['gate'] for g in failing]}")

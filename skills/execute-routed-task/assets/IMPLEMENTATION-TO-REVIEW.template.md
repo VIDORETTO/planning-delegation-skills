@@ -65,5 +65,4 @@ handoff. It must not edit `execution/*` or implementation source files.
 ## Stop instruction
 
 `review-implementation-evidence` independently verifies this work; it does not implement fixes
-itself. If review is waived for this batch per routing, `validate-release-readiness` may consume this
-handoff directly instead.
+ itself. Review waiver uses the separate `IMPLEMENTATION-TO-RELEASE.md` handoff.

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import sys
 import tempfile
 import unittest
@@ -11,6 +12,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 FIX = REPO / "tests" / "fixtures"
+sys.path.insert(0, str(REPO / "scripts"))
+from progress_contract import parse_frontmatter
+from workflow_contract import validate_progress
 
 
 def load(path: Path, name: str):
@@ -25,17 +29,15 @@ def load(path: Path, name: str):
 class FlowFixturesTest(unittest.TestCase):
     def test_flow_a_greenfield_ends_at_release_readiness(self):
         text = (FIX / "greenfield-product" / "PROGRESS.md").read_text(encoding="utf-8")
-        self.assertIn("required_skill: validate-release-readiness", text)
+        self.assertIn("required_skill: NONE", text)
         self.assertIn("status: RELEASE_READY", text)
-        self.assertNotIn("next_skill:", text)
+        self.assertEqual(validate_progress(parse_frontmatter(text).data), [])
         chain = (FIX / "greenfield-product" / "CHAIN.md").read_text(encoding="utf-8")
         self.assertIn("brainstorm → plan → route → execute → review → release", chain)
 
     def test_flow_b_bugfix_omits_brainstorm(self):
         text = (FIX / "existing-code-bug" / "PROGRESS.md").read_text(encoding="utf-8")
-        self.assertIn("required_skill: investigate-existing-codebase", text)
-        self.assertIn("workflow_profile: compact", text)
-        self.assertNotIn("brainstorm-idea-with-user", text)
+        self.assertEqual(validate_progress(parse_frontmatter(text).data), [])
 
     def test_flow_c_ux_unapproved_not_tasks(self):
         handoff = (FIX / "ux-audit-to-plan" / "handoffs" / "UX-AUDIT-TO-PLAN.md").read_text(encoding="utf-8")
@@ -61,13 +63,13 @@ class FlowFixturesTest(unittest.TestCase):
 class ContractInvalidFixturesTest(unittest.TestCase):
     def test_two_writers_recorded_as_conflict(self):
         text = (FIX / "invalid-workflows" / "two-writers" / "PROGRESS.md").read_text(encoding="utf-8")
-        self.assertIn("writer_skill: execute-routed-task", text)
-        self.assertIn("CONFLICT", text)
+        errors = validate_progress(parse_frontmatter(text).data)
+        self.assertTrue(any(error.startswith("STV3-E009-WRITER-LOCK") for error in errors), errors)
 
     def test_stale_revision_blocked(self):
         text = (FIX / "invalid-workflows" / "stale-revision" / "PROGRESS.md").read_text(encoding="utf-8")
-        self.assertIn("status: TASK_BLOCKED", text)
-        self.assertIn("stale", text.lower())
+        errors = validate_progress(parse_frontmatter(text).data)
+        self.assertTrue(any(error.startswith("STV3-E010-REVISION") for error in errors), errors)
 
     def test_release_failed_gate_not_ready(self):
         progress = (FIX / "invalid-workflows" / "release-with-failed-gate" / "PROGRESS.md").read_text(encoding="utf-8")
@@ -99,19 +101,56 @@ class CompactPlanProfileTest(unittest.TestCase):
                 "docs/ai/compact-plan/PROGRESS.md\nPROGRESS.md is the operational pointer.\n",
                 encoding="utf-8",
             )
+            progress = (slug / "PROGRESS.md").read_text(encoding="utf-8")
+            progress = progress.replace("stage: RELEASE", "stage: PLANNING").replace("status: RELEASE_READY", "status: PLAN_VALIDATED")
+            progress = progress.replace("stage_owner: validate-release-readiness", "stage_owner: create-spec-driven-plan").replace("required_skill: NONE", "required_skill: route-ai-work-by-capability", 1)
+            progress = progress.replace("successor_skill: NONE", "successor_skill: execute-routed-task").replace("routing_revision: 1", "routing_revision: 0").replace("implementation_revision: 1", "implementation_revision: 0").replace("review_revision: 1", "review_revision: 0").replace("release_revision: 1", "release_revision: 0")
+            progress = progress.replace("active_artifact: docs/ai/compact-plan/release/RELEASE-READINESS.md", "active_artifact: docs/ai/compact-plan/handoffs/PLAN-TO-ROUTING.md")
+            progress = progress.replace("handoff_status: CONSUMED", "handoff_status: READY")
+            (slug / "PROGRESS.md").write_text(progress, encoding="utf-8")
             old_argv = sys.argv[:]
             try:
                 sys.argv = ["validate_plan.py", str(slug)]
                 result, code = module.validate()
             finally:
                 sys.argv = old_argv
-            # Compact profile should not demand full standard document set.
-            missing_standard = [e for e in result["errors"] if "PRODUCT-SCOPE.md" in e or "USER-JOURNEYS.md" in e]
-            self.assertEqual(missing_standard, [], msg="\n".join(missing_standard))
-            # May still have task section strictness errors depending on template completeness;
-            # assert profile gating specifically worked.
-            profile_errors = [e for e in result["errors"] if "profile=compact" in e and "ANALYSIS.md" in e]
-            self.assertEqual(profile_errors, [])
+            self.assertEqual(code, 0, msg="\n".join(result["errors"]))
+            self.assertEqual(result["errors"], [])
+
+    def test_compact_fixture_proves_the_canonical_routing_to_release_chain(self):
+        validators = {
+            "routing": load(REPO / "skills" / "route-ai-work-by-capability" / "scripts" / "validate_routing.py", "compact_routing"),
+            "execution": load(REPO / "skills" / "execute-routed-task" / "scripts" / "validate_execution.py", "compact_execution"),
+            "review": load(REPO / "skills" / "review-implementation-evidence" / "scripts" / "validate_review.py", "compact_review"),
+            "release": load(REPO / "skills" / "validate-release-readiness" / "scripts" / "validate_release.py", "compact_release"),
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            workflow = Path(tmp) / "compact-plan"
+            shutil.copytree(FIX / "compact-plan", workflow)
+            self.assertTrue((workflow / "handoffs" / "ROUTING-TO-IMPLEMENTATION.md").is_file())
+            self.assertTrue((workflow / "handoffs" / "IMPLEMENTATION-TO-REVIEW.md").is_file())
+            self.assertTrue((workflow / "handoffs" / "REVIEW-TO-RELEASE.md").is_file())
+            self.assertTrue((workflow / "release" / "RELEASE-READINESS.md").is_file())
+
+            def set_progress(**fields: str) -> None:
+                path = workflow / "PROGRESS.md"
+                lines = path.read_text(encoding="utf-8").splitlines()
+                path.write_text("\n".join(
+                    f"{key}: {fields[key]}" if key in fields else line
+                    for line in lines
+                    for key in [line.split(":", 1)[0]]
+                ) + "\n", encoding="utf-8")
+
+            set_progress(stage="ROUTING", status="IMPLEMENTATION_READY", stage_owner="route-ai-work-by-capability", required_skill="execute-routed-task", successor_skill="execute-routed-task", handoff_status="READY", active_artifact="handoffs/ROUTING-TO-IMPLEMENTATION.md")
+            self.assertEqual(validators["routing"].validate_workflow(workflow), 0)
+            set_progress(stage="IMPLEMENTATION", status="IMPLEMENTATION_COMPLETE", stage_owner="execute-routed-task", required_skill="review-implementation-evidence", successor_skill="review-implementation-evidence", handoff_status="READY", active_artifact="handoffs/IMPLEMENTATION-TO-REVIEW.md")
+            self.assertEqual(validators["execution"].main([str(workflow)]), 0)
+            (workflow / "handoffs" / "REVIEW-TO-RELEASE.md").rename(workflow / "handoffs" / "REVIEW-TO-RELEASE.pending")
+            set_progress(stage="REVIEW", status="REVIEW_REQUIRED", stage_owner="review-implementation-evidence", required_skill="review-implementation-evidence", successor_skill="validate-release-readiness", handoff_status="READY", active_artifact="handoffs/IMPLEMENTATION-TO-REVIEW.md")
+            self.assertEqual(validators["review"].main([str(workflow)]), 0)
+            (workflow / "handoffs" / "REVIEW-TO-RELEASE.pending").rename(workflow / "handoffs" / "REVIEW-TO-RELEASE.md")
+            set_progress(stage="RELEASE", status="RELEASE_REVIEW_REQUIRED", stage_owner="validate-release-readiness", required_skill="validate-release-readiness", successor_skill="NONE", handoff_status="READY", active_artifact="handoffs/REVIEW-TO-RELEASE.md")
+            self.assertEqual(validators["release"].main([str(workflow)]), 0)
 
 
 class RoutingDependenciesRegressionTest(unittest.TestCase):

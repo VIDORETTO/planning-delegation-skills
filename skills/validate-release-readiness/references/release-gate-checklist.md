@@ -8,6 +8,8 @@ documents are required, never whether a security, privacy, or data-loss gate can
 - Every task in the release scope is `COMPLETE` with recorded evidence.
 - Every task whose routing required review has a `REVIEW_APPROVED` outcome, or an explicit,
   owner-approved waiver recorded at routing time.
+- A review-required route reaches release only through `REVIEW-TO-RELEASE.md`; a fully waived route
+  reaches release only through `IMPLEMENTATION-TO-RELEASE.md`. Exactly one current input is valid.
 - No open `BLOCKING`/`HIGH` finding remains in `findings/`.
 
 ## Tests
@@ -42,7 +44,7 @@ documents are required, never whether a security, privacy, or data-loss gate can
 ## Accepted risk register
 
 - Every gate that did not fully pass is either fixed or listed here with an explicit owner and
-  rationale — never silently omitted.
+  rationale, review/expiration condition, and resolving evidence citation — never silently omitted.
 
 ## Profile guidance
 

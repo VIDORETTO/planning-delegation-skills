@@ -8,12 +8,19 @@ import re
 import sys
 from pathlib import Path
 
+REPOSITORY_SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
+if str(REPOSITORY_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_SCRIPTS))
+from workflow_contract import validate_handoff as validate_shared_handoff, validate_progress as validate_shared_progress
+
 CONTRACT = "skill-team/v3"
 SKILL = "product-ux-audit"
+SUCCESSOR = "create-spec-driven-plan"
 NATURE = {"OBSERVED_DEFECT", "EVIDENCE_BASED_RECOMMENDATION", "PRODUCT_DECISION_REQUIRED"}
 IMPACT = {"CRITICAL", "HIGH", "MEDIUM", "LOW"}
 PLACEHOLDER_RE = re.compile(r"<[^>\n]+>|\b(?:TBD|TODO|FIXME)\b", re.IGNORECASE)
 BANNED = ("spec-driven-dev", "next_skill:", "--break-system-packages")
+HANDOFF_SECTIONS = ("Identification", "Summary", "Artifact inventory", "Preserved decisions", "Allowed open questions", "Blockers", "Consumer write scope", "Forbidden files", "Commands and results", "Stop instruction")
 
 
 def frontmatter(path: Path) -> dict[str, str]:
@@ -45,11 +52,18 @@ def main() -> int:
         errors.append("missing PROGRESS.md")
     else:
         progress = frontmatter(progress_path)
+        errors.extend(validate_shared_progress(progress))
         if progress.get("workflow_contract") != CONTRACT:
             errors.append("workflow_contract must be skill-team/v3")
-        if progress.get("required_skill") not in {SKILL, "create-spec-driven-plan"}:
-            if not args.allow_in_progress:
-                errors.append("required_skill unexpected for UX audit validation")
+        status = progress.get("status")
+        if progress.get("stage") != "DISCOVERY" or status not in {"UX_AUDIT_IN_PROGRESS", "DISCOVERY_READY", "DISCOVERY_BLOCKED"}:
+            errors.append("UX audit requires canonical DISCOVERY stage and status")
+        expected_required = SUCCESSOR if status == "DISCOVERY_READY" else SKILL
+        if progress.get("required_skill") != expected_required:
+            errors.append("required_skill does not match UX audit state")
+        expected_writer = "null" if status != "UX_AUDIT_IN_PROGRESS" else SKILL
+        if progress.get("writer_skill") != expected_writer:
+            errors.append("writer_skill does not match UX audit state")
 
     ux = root / "discovery" / "ux"
     for name in ("SITEMAP.md", "COVERAGE.md", "UX-AUDIT.md"):
@@ -70,13 +84,24 @@ def main() -> int:
     handoff = root / "handoffs" / "UX-AUDIT-TO-PLAN.md"
     if handoff.is_file():
         data = frontmatter(handoff)
+        handoff_body = handoff.read_text(encoding="utf-8").split("---", 2)[-1]
+        errors.extend(validate_shared_handoff(data, handoff_body))
         if data.get("workflow_contract") != CONTRACT:
             errors.append("handoff workflow_contract invalid")
         if data.get("handoff_status") == "READY" and data.get("validation_result") != "PASS":
             errors.append("READY handoff requires validation_result PASS")
+        expected = {"handoff_type": "ux-audit-to-plan", "producer_skill": SKILL, "consumer_skill": SUCCESSOR}
+        for field, value in expected.items():
+            if data.get(field) != value:
+                errors.append(f"handoff {field} must be {value}")
         text = handoff.read_text(encoding="utf-8")
+        for heading in HANDOFF_SECTIONS:
+            if f"## {heading}" not in text:
+                errors.append(f"handoff missing section: {heading}")
         if "APPROVED" not in text.upper() and data.get("handoff_status") == "READY":
             errors.append("ready UX handoff must list approved findings")
+    elif not args.allow_in_progress:
+        errors.append("missing canonical UX-AUDIT-TO-PLAN handoff")
 
     if errors:
         print("INVALID")

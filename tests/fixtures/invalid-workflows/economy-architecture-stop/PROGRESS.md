@@ -6,9 +6,9 @@ workflow_profile: standard
 stage: IMPLEMENTATION
 status: TASK_BLOCKED
 stage_owner: execute-routed-task
-required_skill: execute-routed-task
+required_skill: null
 successor_skill: create-spec-driven-plan
-handoff_status: READY
+handoff_status: NOT_READY
 discovery_revision: 1
 plan_revision: 0
 routing_revision: 0

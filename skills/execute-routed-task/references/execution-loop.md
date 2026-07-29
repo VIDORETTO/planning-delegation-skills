@@ -18,7 +18,10 @@ executor must never do — regardless of which model is running this skill.
    in `execution/EVIDENCE.md`.
 7. If any stop signal appears mid-task, stop immediately. Revert partial changes if they are left
    inconsistent, and record `ESCALATED: <TASK-ID> — <reason>` in the log instead of trying to resolve
-   it unilaterally.
+    it unilaterally.
+
+Before starting, consume only `handoffs/ROUTING-TO-IMPLEMENTATION.md` whose plan and routing
+revisions match `PROGRESS.md`; no alternate or legacy handoff path is valid.
 
 ## What an executor must never do
 

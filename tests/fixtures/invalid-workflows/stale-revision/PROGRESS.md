@@ -6,11 +6,11 @@ workflow_profile: standard
 stage: IMPLEMENTATION
 status: TASK_BLOCKED
 stage_owner: execute-routed-task
-required_skill: execute-routed-task
+required_skill: null
 successor_skill: route-ai-work-by-capability
-handoff_status: READY
+handoff_status: NOT_READY
 discovery_revision: 1
-plan_revision: 3
+plan_revision: stale
 routing_revision: 1
 implementation_revision: 0
 review_revision: 0

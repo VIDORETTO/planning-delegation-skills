@@ -6,9 +6,9 @@ workflow_profile: standard
 stage: RELEASE
 status: RELEASE_READY
 stage_owner: validate-release-readiness
-required_skill: validate-release-readiness
-successor_skill: null
-handoff_status: READY
+required_skill: NONE
+successor_skill: NONE
+handoff_status: CONSUMED
 discovery_revision: 1
 plan_revision: 1
 routing_revision: 1

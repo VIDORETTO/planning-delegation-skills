@@ -1,0 +1,70 @@
+{
+  "analysis_version": "1",
+  "findings": [
+    {
+      "category": "GOVERNANCE_VIOLATION",
+      "detail": "confirmed governance conflict: GOV-001",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-255A99C12652",
+      "location": "plan/GOVERNANCE-CHECK.md:3",
+      "severity": "BLOCKING"
+    },
+    {
+      "category": "UNCOVERED_REQUIREMENT",
+      "detail": "active requirement REQ-002 has no task",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-274613212E65",
+      "location": "plan/SPEC.md",
+      "severity": "BLOCKING"
+    },
+    {
+      "category": "STALE_REVISION",
+      "detail": "specification revision 3 does not match plan revision 4",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-5887E8029B43",
+      "location": "plan/checklists/requirements-completeness.md:3",
+      "severity": "BLOCKING"
+    },
+    {
+      "category": "ORPHAN_TASK",
+      "detail": "task F01-002 has no active requirement",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-9616E2DB612B",
+      "location": "plan/phases/P01.md:11",
+      "severity": "BLOCKING"
+    },
+    {
+      "category": "INVALID_DEPENDENCY",
+      "detail": "F01-003 depends on unknown task F99-999",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-1DA589F8D3DE",
+      "location": "plan/phases/P01.md:19",
+      "severity": "BLOCKING"
+    },
+    {
+      "category": "INVALID_PATH",
+      "detail": "local link target does not exist: missing.md",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-F7E970897695",
+      "location": "plan/phases/P01.md:27",
+      "severity": "BLOCKING"
+    },
+    {
+      "category": "DEPENDENCY_CYCLE",
+      "detail": "F01-001 -> F01-002 -> F01-001",
+      "disposition": "REMEDIATE",
+      "finding_id": "ANA-F60078EC203A",
+      "location": "plan/phases/P01.md:3",
+      "severity": "BLOCKING"
+    }
+  ],
+  "metrics": {
+    "active_requirements": 2,
+    "advisory_findings": 0,
+    "blocking_findings": 7,
+    "covered_requirements": 1,
+    "orphan_tasks": 1,
+    "tasks": 3
+  },
+  "plan_revision": "4"
+}

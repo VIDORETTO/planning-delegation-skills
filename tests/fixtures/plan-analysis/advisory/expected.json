@@ -1,0 +1,30 @@
+{
+  "analysis_version": "1",
+  "findings": [
+    {
+      "category": "AMBIGUITY",
+      "detail": "unquantified term: fast",
+      "disposition": "REVIEW",
+      "finding_id": "ANA-12A6B803C628",
+      "location": "plan/SPEC.md:5",
+      "severity": "ADVISORY"
+    },
+    {
+      "category": "TERMINOLOGY_DRIFT",
+      "detail": "deprecated term: client",
+      "disposition": "REVIEW",
+      "finding_id": "ANA-FCE5D246CE6F",
+      "location": "plan/SPEC.md:5",
+      "severity": "ADVISORY"
+    }
+  ],
+  "metrics": {
+    "active_requirements": 1,
+    "advisory_findings": 2,
+    "blocking_findings": 0,
+    "covered_requirements": 1,
+    "orphan_tasks": 0,
+    "tasks": 1
+  },
+  "plan_revision": "3"
+}

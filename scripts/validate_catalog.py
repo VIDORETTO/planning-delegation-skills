@@ -11,7 +11,8 @@ Checks:
   5. When SKILL.md exists, its frontmatter `name` matches both the folder
      name and the catalog entry name.
   6. Each catalog entry has the required fields with sane types/values.
-  7. Each entry's `category` exists in catalog/categories.json.
+   7. Each entry's `category` exists in catalog/categories.json.
+   8. Each entry's produced artifact paths match its canonical v3 contract.
 
 Usage:
     python scripts/validate_catalog.py [--repo-root PATH] [--json]
@@ -39,6 +40,53 @@ REQUIRED_ENTRY_FIELDS = {
     "platform_neutral": bool,
 }
 ALLOWED_STATUSES = {"draft", "stable", "deprecated"}
+CANONICAL_PRODUCES = {
+    "brainstorm-idea-with-user": {
+        "docs/ai/<slug>/discovery/brainstorm/BRAINSTORM.md",
+        "docs/ai/<slug>/handoffs/BRAINSTORM-TO-PLAN.md",
+    },
+    "investigate-existing-codebase": {
+        "docs/ai/<slug>/discovery/codebase/INVESTIGATION.md",
+        "docs/ai/<slug>/discovery/codebase/EVIDENCE.md",
+        "docs/ai/<slug>/handoffs/CODEBASE-TO-PLAN.md",
+    },
+    "product-ux-audit": {
+        "docs/ai/<slug>/discovery/ux/SITEMAP.md",
+        "docs/ai/<slug>/discovery/ux/COVERAGE.md",
+        "docs/ai/<slug>/discovery/ux/UX-AUDIT.md",
+        "docs/ai/<slug>/handoffs/UX-AUDIT-TO-PLAN.md",
+    },
+    "create-spec-driven-plan": {
+        "docs/ai/<slug>/plan/**",
+        "docs/ai/<slug>/handoffs/PLAN-TO-ROUTING.md",
+    },
+    "route-ai-work-by-capability": {
+        "docs/ai/<slug>/routing/ROUTING.md",
+        "docs/ai/<slug>/routing/MODEL-CAPABILITIES.md",
+        "docs/ai/<slug>/handoffs/ROUTING-TO-IMPLEMENTATION.md",
+    },
+    "execute-routed-task": {
+        "docs/ai/<slug>/execution/EVIDENCE.md",
+        "docs/ai/<slug>/execution/HISTORY.md",
+        "docs/ai/<slug>/blockers/<TASK-ID>.md",
+        "docs/ai/<slug>/handoffs/IMPLEMENTATION-TO-REVIEW.md",
+        "docs/ai/<slug>/handoffs/IMPLEMENTATION-TO-RELEASE.md",
+    },
+    "review-implementation-evidence": {
+        "docs/ai/<slug>/review/REVIEW-REPORT.md",
+        "docs/ai/<slug>/handoffs/REVIEW-TO-RELEASE.md",
+        "docs/ai/<slug>/handoffs/REVIEW-TO-IMPLEMENTATION.md",
+    },
+    "validate-release-readiness": {
+        "docs/ai/<slug>/release/RELEASE-READINESS.md",
+        "docs/ai/<slug>/PROGRESS.md#release_revision",
+    },
+    "author-repository-skill": {
+        "skills/<name>/SKILL.md",
+        "skills/<name>/agents/openai.yaml",
+        "catalog/skills.json#entry",
+    },
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -115,6 +163,16 @@ def validate(repo_root: Path) -> tuple[list[str], dict]:
         contracts = entry.get("workflow_contracts")
         if isinstance(contracts, list) and "skill-team/v3" not in contracts:
             errors.append(f"{location} ({name}): workflow_contracts must include 'skill-team/v3'")
+
+        produces = entry.get("produces")
+        expected_produces = CANONICAL_PRODUCES.get(name)
+        if isinstance(produces, list) and expected_produces is not None:
+            actual_produces = set(produces)
+            if actual_produces != expected_produces or len(actual_produces) != len(produces):
+                errors.append(
+                    f"{location} ({name}): produces must match canonical paths; "
+                    f"expected {sorted(expected_produces)!r}, got {sorted(actual_produces)!r}"
+                )
 
         category = entry.get("category")
         if isinstance(category, str) and known_categories and category not in known_categories:

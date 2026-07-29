@@ -26,7 +26,9 @@ catalog/compatibility.json).
 from __future__ import annotations
 
 import argparse
+import json
 import py_compile
+import re
 import subprocess
 import sys
 import unittest
@@ -34,9 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from progress_contract import parse_frontmatter  # noqa: E402
-
-EXPECTED_LEGACY_SKILLS = {"advisor-planner"}
-
+from workflow_contract import validate_handoff, validate_progress  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -102,8 +102,6 @@ def step_adapter_presence(repo_root: Path) -> StepResult:
     skills_dir = repo_root / "skills"
     if skills_dir.is_dir():
         for folder in sorted(p for p in skills_dir.iterdir() if p.is_dir()):
-            if folder.name in EXPECTED_LEGACY_SKILLS:
-                continue
             if not (folder / "SKILL.md").is_file():
                 continue
             adapter = folder / "agents" / "openai.yaml"
@@ -150,6 +148,104 @@ def step_py_compile(repo_root: Path) -> StepResult:
     return StepResult("py_compile all scripts", ok, True, details)
 
 
+def step_contract_schemas(repo_root: Path) -> StepResult:
+    """Parse every canonical JSON schema and enforce strict object schemas."""
+    contracts = repo_root / "contracts"
+    names = ("progress-schema.json", "handoff-schema.json", "task-schema.json", "routing-schema.json")
+    details: list[str] = []
+    ok = True
+    for name in names:
+        path = contracts / name
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if data.get("type") != "object" or data.get("additionalProperties") is not False:
+                raise ValueError("must be a strict object schema")
+            details.append(f"validated {name}")
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            ok = False
+            details.append(f"error: {name}: {exc}")
+    return StepResult("validate canonical contract schemas", ok, True, details)
+
+
+def step_canonical_template_instances(repo_root: Path) -> StepResult:
+    """Instantiate canonical handoff templates and validate their shared contract."""
+    templates = (
+        "skills/brainstorm-idea-with-user/assets/BRAINSTORM-TO-PLAN.template.md",
+        "skills/investigate-existing-codebase/assets/CODEBASE-TO-PLAN.template.md",
+        "skills/product-ux-audit/assets/UX-AUDIT-TO-PLAN.template.md",
+        "skills/create-spec-driven-plan/assets/PLAN-TO-ROUTING.template.md",
+        "skills/route-ai-work-by-capability/assets/ROUTING-TO-IMPLEMENTATION.template.md",
+        "skills/execute-routed-task/assets/IMPLEMENTATION-TO-REVIEW.template.md",
+        "skills/execute-routed-task/assets/IMPLEMENTATION-TO-RELEASE.template.md",
+        "skills/review-implementation-evidence/assets/REVIEW-TO-IMPLEMENTATION.template.md",
+        "skills/review-implementation-evidence/assets/REVIEW-TO-RELEASE.template.md",
+    )
+    details: list[str] = []
+    ok = True
+    for relative in templates:
+        path = repo_root / relative
+        try:
+            # Replace template tokens before validation; templates themselves must remain reusable.
+            text = re.sub(r"<[^>\n]+>", "example", path.read_text(encoding="utf-8"))
+            text = re.sub(r"(?m)^(input_revision|output_revision): example$", r"\1: 1", text)
+            text = re.sub(r"(?m)^generated_at: example$", "generated_at: 2026-01-01T00:00:00Z", text)
+            frontmatter = parse_frontmatter(text)
+            errors = validate_handoff(frontmatter.data, text)
+            if not frontmatter.found or not frontmatter.terminated:
+                errors.append("frontmatter is missing or unterminated")
+            if errors:
+                raise ValueError("; ".join(errors))
+            details.append(f"validated {relative}")
+        except (OSError, ValueError) as exc:
+            ok = False
+            details.append(f"error: {relative}: {exc}")
+    return StepResult("instantiate canonical handoff templates", ok, True, details)
+
+
+def step_workflow_fixtures(repo_root: Path) -> StepResult:
+    """Validate canonical valid fixtures and assert deterministic invalid failures."""
+    fixtures = repo_root / "tests" / "fixtures"
+    valid = ("greenfield-product", "existing-code-bug", "ux-audit-to-plan", "compact-plan")
+    invalid = {
+        "two-writers": "STV3-E009-WRITER-LOCK",
+        "stale-revision": "STV3-E010-REVISION",
+        "legacy-alias": "STV3-E001-CONTRACT",
+    }
+    details: list[str] = []
+    ok = True
+    for name in valid:
+        path = fixtures / name / "PROGRESS.md"
+        data = parse_frontmatter(path.read_text(encoding="utf-8")).data if path.is_file() else {}
+        errors = validate_progress(data)
+        if errors:
+            ok = False
+            details.append(f"error: valid fixture {name}: {'; '.join(errors)}")
+        else:
+            details.append(f"validated valid fixture {name}")
+    for name, expected_error in invalid.items():
+        path = fixtures / "invalid-workflows" / name / "PROGRESS.md"
+        data = parse_frontmatter(path.read_text(encoding="utf-8")).data if path.is_file() else {}
+        errors = validate_progress(data)
+        if expected_error not in "\n".join(errors):
+            ok = False
+            details.append(f"error: invalid fixture {name}: expected {expected_error}, got {errors!r}")
+        else:
+            details.append(f"rejected invalid fixture {name}: {expected_error}")
+    placeholder = fixtures / "invalid-workflows" / "placeholder-handoff" / "PLAN-TO-ROUTING.md"
+    if not placeholder.is_file():
+        ok = False
+        details.append("error: invalid fixture placeholder-handoff: missing PLAN-TO-ROUTING.md")
+    else:
+        text = placeholder.read_text(encoding="utf-8")
+        errors = validate_handoff(parse_frontmatter(text).data, text)
+        if "<" not in text or not errors:
+            ok = False
+            details.append("error: invalid fixture placeholder-handoff: expected placeholder contract failure")
+        else:
+            details.append("rejected invalid fixture placeholder-handoff: STV3-E012-HANDOFF-CONTRACT")
+    return StepResult("validate workflow fixtures", ok, True, details)
+
+
 def step_unittest(repo_root: Path) -> StepResult:
     """Step 11: run unittest discovery over tests/."""
 
@@ -181,10 +277,13 @@ def main() -> int:
     steps.append(step_adapter_presence(repo_root))
     steps.append(run_subprocess_check("check local links", scripts_dir / "check_local_links.py", repo_root))
     steps.append(step_py_compile(repo_root))
+    steps.append(step_contract_schemas(repo_root))
+    steps.append(step_canonical_template_instances(repo_root))
     steps.append(run_subprocess_check("check skill references", scripts_dir / "check_skill_references.py", repo_root))
     steps.append(run_subprocess_check("detect trigger overlap", scripts_dir / "detect_trigger_overlap.py", repo_root))
     steps.append(run_subprocess_check("detect orphan resources", scripts_dir / "detect_orphan_resources.py", repo_root))
     steps.append(run_subprocess_check("validate catalog", scripts_dir / "validate_catalog.py", repo_root))
+    steps.append(step_workflow_fixtures(repo_root))
     steps.append(step_unittest(repo_root))
 
     print("=" * 72)

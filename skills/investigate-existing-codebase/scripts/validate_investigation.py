@@ -16,6 +16,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+REPOSITORY_SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
+if str(REPOSITORY_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_SCRIPTS))
+from workflow_contract import validate_handoff as validate_shared_handoff, validate_progress as validate_shared_progress
+
 CONTRACT = "skill-team/v3"
 SKILL = "investigate-existing-codebase"
 SUCCESSOR = "create-spec-driven-plan"
@@ -157,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     handoff, handoff_body = frontmatter(paths["handoff"], report) if paths["handoff"].is_file() else ({}, "")
 
     if progress:
+        report.errors.extend(validate_shared_progress({key: "null" if value is None else str(value) for key, value in progress.items()}))
         require_keys(progress, (
             "workflow_contract", "project_id", "project_slug", "stage", "status", "stage_owner",
             "required_skill", "successor_skill", "handoff_status", "discovery_revision",
@@ -210,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
                 report.error("DISCOVERY_READY requires root cause / pattern evidence with an EV-* reference")
 
     if handoff:
+        report.errors.extend(validate_shared_handoff({key: "null" if value is None else str(value) for key, value in handoff.items()}, handoff_body))
         require_keys(handoff, (
             "workflow_contract", "handoff_type", "project_id", "producer_skill", "consumer_skill",
             "input_revision", "output_revision", "handoff_status", "validation_command",

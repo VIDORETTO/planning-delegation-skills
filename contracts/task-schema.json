@@ -3,7 +3,7 @@
   "$id": "https://vidoretto.dev/schemas/skill-team/v3/task.schema.json",
   "title": "skill-team/v3 task fields",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": [
     "task_id",
     "title",
@@ -12,7 +12,19 @@
     "reviewer",
     "dependencies",
     "write_scope",
-    "forbidden_scope"
+    "forbidden_scope",
+    "objective",
+    "inputs",
+    "outputs",
+    "errors",
+    "invariants",
+    "security",
+    "implementation_steps",
+    "tests",
+    "acceptance",
+    "rollback",
+    "evidence",
+    "escalation"
   ],
   "properties": {
     "task_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-\\d{3}$" },
@@ -46,6 +58,18 @@
     "forbidden_scope": {
       "type": "array",
       "items": { "type": "string" }
-    }
+    },
+    "objective": { "type": "string", "minLength": 1 },
+    "inputs": { "type": "array", "items": { "type": "string" } },
+    "outputs": { "type": "array", "items": { "type": "string" } },
+    "errors": { "type": "array", "items": { "type": "string" } },
+    "invariants": { "type": "array", "items": { "type": "string" } },
+    "security": { "type": "array", "items": { "type": "string" } },
+    "implementation_steps": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "tests": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "acceptance": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "rollback": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "evidence": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "escalation": { "type": "array", "minItems": 1, "items": { "type": "string" } }
   }
 }

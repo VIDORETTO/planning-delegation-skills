@@ -14,6 +14,10 @@ generated_at: <ISO-8601>
 
 # UX audit to plan handoff
 
+## Identification
+
+- UX audit revision: <OUTPUT_REVISION>
+
 ## Summary
 
 <approved scope for planning>
@@ -37,6 +41,18 @@ generated_at: <ISO-8601>
 - `discovery/ux/COVERAGE.md`
 - selected screen reports and redacted evidence
 
+## Preserved decisions
+
+- Approved findings only; excluded findings remain excluded.
+
+## Allowed open questions
+
+- <NON_STRUCTURAL_QUESTION_OR_NONE>
+
+## Blockers
+
+- NONE
+
 ## Consumer write scope
 
 - `plan/`
@@ -47,6 +63,12 @@ generated_at: <ISO-8601>
 
 - Do not modify `discovery/ux/` except to mark handoff consumption metadata if required by contract.
 - Do not create tasks from excluded findings.
+
+## Commands and results
+
+| Command | Result |
+|---|---|
+| `python skills/product-ux-audit/scripts/validate_ux_audit.py docs/ai/<slug>` | PASS \| FAIL |
 
 ## Stop instruction
 

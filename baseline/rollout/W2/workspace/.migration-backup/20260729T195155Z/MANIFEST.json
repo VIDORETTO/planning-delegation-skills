@@ -1,0 +1,38 @@
+{
+  "format": "skill-team/v3-migration-manifest/1",
+  "created_at": "2026-07-29T19:51:55.936761+00:00",
+  "project_root": "C:\\Users\\Motokao\\Downloads\\agent-kit\\skill-team-main\\baseline\\rollout\\W2\\workspace",
+  "files": [
+    {
+      "path": "PROGRESS.md",
+      "source_sha256": "332174b8456dfe957862538a00675bbf439038ea24b7adff5eb2bdec6a13dc9d",
+      "migrated_sha256": "e6d41fb417a96d305f726c466200ae058cde263fcfa3b380b790a4f89dee4f4d",
+      "source_revisions": {
+        "plan_revision": "0",
+        "routing_revision": "0",
+        "brainstorm_revision": "2"
+      },
+      "migrated_revisions": {
+        "discovery_revision": "2",
+        "plan_revision": "0",
+        "routing_revision": "0",
+        "implementation_revision": "0",
+        "review_revision": "0",
+        "release_revision": "0"
+      },
+      "changes": [
+        "mapped active_skill -> stage_owner",
+        "mapped last_validation -> last_validation_result",
+        "mapped brainstorm_revision -> discovery_revision",
+        "mapped stage alias",
+        "mapped status alias",
+        "set required_skill=create-spec-driven-plan successor_skill=route-ai-work-by-capability",
+        "mapped next_skill exactly once",
+        "added implementation_revision",
+        "added review_revision",
+        "added release_revision",
+        "set workflow_contract to skill-team/v3"
+      ]
+    }
+  ]
+}

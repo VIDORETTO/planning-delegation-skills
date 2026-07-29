@@ -1,45 +1,49 @@
-# Handoff — Plan to routing
+---
+workflow_contract: skill-team/v3
+handoff_type: plan-to-routing
+project_id: <PROJECT_ID>
+producer_skill: create-spec-driven-plan
+consumer_skill: route-ai-work-by-capability
+input_revision: <DISCOVERY_REVISION>
+output_revision: <PLAN_REVISION>
+handoff_status: NOT_READY
+validation_command: python skills/create-spec-driven-plan/scripts/validate_plan.py docs/ai/<PROJECT_SLUG>
+validation_result: NOT_RUN
+generated_at: <ISO_8601_TIMESTAMP>
+---
+
+# Plan to routing handoff
 
 ## Identification
+- Plan revision: <PLAN_REVISION>
+- Discovery revision used: <DISCOVERY_REVISION>
 
-- Workflow contract: `skill-team/v3`
-- Plan revision: <INTEGER>
-- Brainstorm revision used: <INTEGER>
-- Generated at: <ISO_8601_TIMESTAMP>
-- Producer skill: `create-spec-driven-plan`
-- Consumer skill: `route-ai-work-by-capability`
+## Summary
+<PLAN_SUMMARY>
 
-## Plan inventory
+## Artifact inventory
+- `plan/00-MASTER.md`
+- `plan/TRACEABILITY.md`
 
-- Requirements: <COUNT>
-- Phases: <COUNT>
-- Tasks: <COUNT>
-- Unassigned tasks: <TASK_IDS>
-- Tasks with hard gates: <TASK_IDS_OR_NONE>
-- Potentially mixed tasks: <TASK_IDS_OR_NONE>
+## Preserved decisions
+- <DECISION_OR_NONE>
 
-## Dependency graph
+## Allowed open questions
+- NONE
 
-- Result: VALID
-- Command: `<VALIDATION_COMMAND>`
+## Blockers
+- NONE
 
-## Open matters
+## Consumer write scope
+- `routing/`
 
-- Open questions: <IDS_OR_NONE>
-- Defaults adopted: <DEC_IDS_OR_NONE>
-- Blocking matters: none
+## Forbidden files
+- `plan/`
 
-## Validation
+## Commands and results
+| Command | Result |
+|---|---|
+| `<VALIDATION_COMMAND>` | NOT_RUN |
 
-- Command: `python skills/create-spec-driven-plan/scripts/validate_plan.py docs/ai/<SLUG>`
-- Result: VALID
-
-## Routing write scope
-
-- `plan/ROUTING.md`
-- `MODEL-CAPABILITIES.md`
-- `handoffs/ROUTING-TO-IMPLEMENTATION.md`
-- routing fields in `PROGRESS.md`
-- Executor, Reviewer and review metadata in phase tasks
-
-Routing must not alter requirements, architecture, contracts, dependencies or acceptance criteria. If those are incomplete, set `REPLAN_REQUIRED` and return to `create-spec-driven-plan`.
+## Stop instruction
+Invoke `route-ai-work-by-capability` separately. It must not change plan semantics.

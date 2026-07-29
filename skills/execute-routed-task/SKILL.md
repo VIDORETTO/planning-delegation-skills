@@ -52,13 +52,16 @@ writer_skill: null | execute-routed-task
 
 Additionally require:
 
-- `handoffs/ROUTING-TO-IMPLEMENTATION.md` (or equivalent routing handoff) exists and is `READY`;
+- `handoffs/ROUTING-TO-IMPLEMENTATION.md` exists and is `READY`; no alternate or legacy handoff path is accepted;
 - its `input_revision`/`output_revision` match the plan and routing revisions in `PROGRESS.md`;
 - the target task has a stable ID, one registered executor model, explicit write scope, tests, and
   non-empty acceptance criteria;
 - `active_executor_model` in `PROGRESS.md` matches the task's registered executor;
 - `writer_skill` is unset or already `execute-routed-task` — never start while another skill or task
   holds the write lock.
+
+For `TASK_IN_PROGRESS`, `writer_skill` must be `execute-routed-task` and `writer_task` must equal
+`active_task`. All other implementation states release both fields.
 
 If any condition fails, do not repair the plan or routing. Record the precise failure, set
 `status: REROUTE_REQUIRED` or `REPLAN_REQUIRED` as appropriate, `required_skill` to the owning skill,

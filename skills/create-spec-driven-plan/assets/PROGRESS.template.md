@@ -2,51 +2,33 @@
 workflow_contract: skill-team/v3
 project_id: <PROJECT_ID>
 project_slug: <PROJECT_SLUG>
-stage: PLAN
+workflow_profile: standard
+stage: PLANNING
 status: PLAN_IN_PROGRESS
 stage_owner: create-spec-driven-plan
 required_skill: create-spec-driven-plan
+successor_skill: route-ai-work-by-capability
 handoff_status: NOT_READY
-brainstorm_revision: 1
-plan_revision: 0
+discovery_revision: 1
+plan_revision: 1
 routing_revision: 0
-plan_based_on_brainstorm_revision: null
-routing_based_on_plan_revision: null
+implementation_revision: 0
+review_revision: 0
+release_revision: 0
 active_artifact: docs/ai/<PROJECT_SLUG>/plan/00-MASTER.md
-current_task: null
-next_action: Formalizar requisitos candidatos e contratos
-blockers: []
-last_validation:
-  command: null
-  result: NOT_RUN
+active_task: null
+active_batch: null
+active_executor_model: null
+active_reviewer_model: null
+writer_skill: create-spec-driven-plan
+writer_task: null
+next_action: Formalize validated discovery into a plan
+blockers: NONE
+last_validation_command: NONE
+last_validation_result: NOT_RUN
 updated_at: <ISO_8601_TIMESTAMP>
 ---
 
-# Progresso do projeto
+# Project progress
 
-## Situação atual
-
-- Etapa: Planejamento
-- Skill responsável: `create-spec-driven-plan`
-- Próxima ação: formalizar requisitos e contratos
-- Próxima skill: `create-spec-driven-plan`
-- Handoff: ainda não autorizado
-
-## Documentos ativos
-
-- Master: `plan/00-MASTER.md`
-- Análise: `plan/ANALYSIS.md`
-- Fase ativa: `plan/phases/<PHASE_ID>.md`
-- Handoff de entrada: `handoffs/BRAINSTORM-TO-PLAN.md`
-
-## Evidência da tarefa atual
-
-- Objetivo: none
-- Arquivos: none
-- Comandos: none
-- Resultado: NOT_RUN
-- Riscos restantes: none
-
-## Bloqueios
-
-- none
+Planning is active. Read the frontmatter as the authoritative operational state.

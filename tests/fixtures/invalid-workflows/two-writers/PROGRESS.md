@@ -8,7 +8,7 @@ status: TASK_IN_PROGRESS
 stage_owner: execute-routed-task
 required_skill: execute-routed-task
 successor_skill: review-implementation-evidence
-handoff_status: READY
+handoff_status: CONSUMED
 discovery_revision: 1
 plan_revision: 0
 routing_revision: 0
@@ -20,7 +20,7 @@ active_task: F01-001
 active_batch: null
 active_executor_model: MODEL-ECONOMY
 active_reviewer_model: null
-writer_skill: execute-routed-task
+writer_skill: route-ai-work-by-capability
 writer_task: F01-001
 next_action: Continue workflow
 blockers: CONFLICT: second writer attempted MODEL-OTHER on F01-002

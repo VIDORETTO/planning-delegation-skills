@@ -38,13 +38,14 @@ Do not implement missing work, do not deploy, and do not weaken a gate to force 
 | Situation | Required action |
 |---|---|
 | `status: RELEASE_REVIEW_REQUIRED`, `required_skill: validate-release-readiness`, `handoffs/REVIEW-TO-RELEASE.md` `READY` | Evaluate gates |
-| Review was explicitly waived for the whole batch and `handoffs/IMPLEMENTATION-TO-REVIEW.md` names `validate-release-readiness` as consumer | Evaluate gates using that handoff instead |
+| Review was explicitly waived for the whole batch and `handoffs/IMPLEMENTATION-TO-RELEASE.md` names `validate-release-readiness` as consumer | Evaluate gates using that handoff instead |
 | `status: RELEASE_BLOCKED`, blockers resolved by an upstream stage | Re-evaluate only the previously blocking gates |
 | `status: RELEASED` and observed outcomes are due | Move to post-release review |
 | Any other status owned by another skill | Stop without modifying artifacts |
 
-Confirm the consumed handoff's `output_revision` matches the corresponding revision in `PROGRESS.md`
-before evaluating. A stale handoff is not evaluable; report which upstream skill must refresh it.
+Confirm the consumed handoff's input and output revisions match the corresponding revisions in
+`PROGRESS.md` before evaluating. A stale handoff is not evaluable; report which upstream skill must
+refresh it.
 
 ## Method
 

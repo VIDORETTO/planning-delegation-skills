@@ -14,6 +14,9 @@ generated_at: <ISO-8601>
 
 # Codebase to plan handoff
 
+## Identification
+- Investigation revision: <OUTPUT_REVISION>
+
 ## Summary
 <summary>
 
@@ -24,7 +27,7 @@ generated_at: <ISO-8601>
 ## Preserved decisions
 - NONE
 
-## Open questions allowed in planning
+## Allowed open questions
 - <minor>
 
 ## Blockers
@@ -35,6 +38,11 @@ generated_at: <ISO-8601>
 
 ## Forbidden files
 - discovery/codebase/ except consumption metadata
+
+## Commands and results
+| Command | Result |
+|---|---|
+| `python skills/investigate-existing-codebase/scripts/validate_investigation.py docs/ai/<slug>` | PASS \| FAIL |
 
 ## Stop instruction
 Invoke create-spec-driven-plan separately. Do not implement.

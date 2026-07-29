@@ -117,10 +117,12 @@ Flat YAML frontmatter only (stdlib-parseable). Body is a short human view regene
 ### Release
 
 - `RELEASE_REVIEW_REQUIRED`
+- `RELEASE_REVIEW_IN_PROGRESS`
 - `RELEASE_BLOCKED`
 - `RELEASE_READY`
 - `RELEASED`
 - `POST_RELEASE_REVIEW_REQUIRED`
+- `POST_RELEASE_REVIEW_IN_PROGRESS`
 
 ## Transition rules
 
@@ -166,6 +168,51 @@ generated_at: <ISO-8601>
 Body must include: identification, summary, artifact inventory, preserved decisions, allowed open questions, blockers, consumer write scope, forbidden files, commands/results, stop instruction.
 
 A `READY` handoff is immutable for its revision. Material change creates a new revision.
+
+## Canonical state matrix
+
+`NONE` is the terminal value for `required_skill` and `successor_skill`. A YAML `null` value is valid only for inactive task, batch, model, and writer fields. The statuses below belong to exactly one stage.
+
+| Stage/status | Owner | Required skill | Writer | Handoff at rest |
+|---|---|---|---|---|
+| `DISCOVERY/BRAINSTORM_IN_PROGRESS` | brainstorm | brainstorm | brainstorm | `NOT_READY` |
+| `DISCOVERY/CODEBASE_INVESTIGATION_IN_PROGRESS` | investigate | investigate | investigate | `NOT_READY` |
+| `DISCOVERY/UX_AUDIT_IN_PROGRESS` | ux audit | ux audit | ux audit | `NOT_READY` |
+| `DISCOVERY/DISCOVERY_READY` | final discovery owner | planner | null | `READY` |
+| `DISCOVERY/DISCOVERY_BLOCKED` | discovery owner | discovery owner | null | `NOT_READY` |
+| `PLANNING/PLAN_IN_PROGRESS` | planner | planner | planner | `NOT_READY` |
+| `PLANNING/PLAN_VALIDATED` | planner | router | null | `READY` |
+| `PLANNING/REPLAN_REQUIRED` | planner | planner | null | `NOT_READY` |
+| `ROUTING/ROUTING_IN_PROGRESS` | router | router | router | `NOT_READY` |
+| `ROUTING/IMPLEMENTATION_READY` | router | executor | null | `READY` |
+| `ROUTING/REROUTE_REQUIRED` | router | router | null | `NOT_READY` |
+| `IMPLEMENTATION/TASK_IN_PROGRESS` | executor | executor | executor and task | `CONSUMED` |
+| `IMPLEMENTATION/TASK_COMPLETE` | executor | executor | null | `NOT_READY` |
+| `IMPLEMENTATION/TASK_BLOCKED` | executor | classified owner | null | `NOT_READY` |
+| `IMPLEMENTATION/IMPLEMENTATION_COMPLETE` | executor | reviewer or release validator | null | `READY` |
+| `REVIEW/REVIEW_REQUIRED` | reviewer | reviewer | null | `READY` |
+| `REVIEW/REVIEW_IN_PROGRESS` | reviewer | reviewer | reviewer | `CONSUMED` |
+| `REVIEW/CHANGES_REQUIRED` | reviewer | executor | null | `READY` |
+| `REVIEW/REVIEW_APPROVED` | reviewer | release validator | null | `READY` |
+| `RELEASE/RELEASE_REVIEW_REQUIRED` | release validator | release validator | null | `READY` |
+| `RELEASE/RELEASE_REVIEW_IN_PROGRESS` | release validator | release validator | release validator | `CONSUMED` |
+| `RELEASE/RELEASE_BLOCKED` | release validator | release validator | null | `NOT_READY` |
+| `RELEASE/RELEASE_READY` | release validator | `NONE` | null | `CONSUMED` |
+| `RELEASE/RELEASED` | release validator | `NONE` | null | `CONSUMED` |
+| `RELEASE/POST_RELEASE_REVIEW_REQUIRED` | release validator | release validator | null | `NOT_READY` |
+| `RELEASE/POST_RELEASE_REVIEW_IN_PROGRESS` | release validator | release validator | release validator | `CONSUMED` |
+
+The full owner identifiers are `brainstorm-idea-with-user`, `investigate-existing-codebase`, `product-ux-audit`, `create-spec-driven-plan`, `route-ai-work-by-capability`, `execute-routed-task`, `review-implementation-evidence`, and `validate-release-readiness` in their respective rows.
+
+## Transition and revision rules
+
+Discovery enters at revision 1 and reaches `DISCOVERY_READY` only after its validator passes. Consuming it increments `plan_revision`; a validated plan increments `routing_revision` when routing starts. The first implementation task for a routed pass increments `implementation_revision`; all tasks in that pass retain it. Entering review increments `review_revision`; entering release evaluation increments `release_revision`.
+
+`REPLAN_REQUIRED` returns only to planning, `REROUTE_REQUIRED` only to routing, bounded review corrections only to implementation, technical contradictions only to codebase investigation, and product-intent changes only to brainstorm. A return never resets a downstream revision: stale downstream artifacts remain historical until regenerated. The review-waived path uses `implementation-to-release`; otherwise implementation uses `implementation-to-review`, then `review-to-release` after approval.
+
+Every transition clears `last_validation_result` to `NOT_RUN` on entry and sets it to `PASS` only after the stage validator succeeds. A transition requires the acting `required_skill`, a coherent writer lock, a fresh consumed handoff where applicable, synchronized input/output revisions, and a valid active artifact. `TASK_IN_PROGRESS` additionally requires `writer_task`; every other state requires `writer_task: null`.
+
+Combined discovery is sequential: its final owner inventories prior ready handoffs and emits one aggregate ready handoff at the current discovery revision. Any changed inventoried input makes that aggregate stale.
 
 ## Change control
 

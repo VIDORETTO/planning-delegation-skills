@@ -1,89 +1,47 @@
 ---
 workflow_contract: skill-team/v3
-brainstorm_revision: <revision>
-generated_at: <ISO-8601-with-timezone>
+handoff_type: brainstorm-to-plan
+project_id: <PROJECT_ID>
 producer_skill: brainstorm-idea-with-user
 consumer_skill: create-spec-driven-plan
-handoff_status: READY
+input_revision: <DISCOVERY_REVISION>
+output_revision: <DISCOVERY_REVISION>
+handoff_status: NOT_READY
+validation_command: python skills/brainstorm-idea-with-user/scripts/validate_brainstorm.py docs/ai/<PROJECT_SLUG>
+validation_result: NOT_RUN
+generated_at: <ISO_8601_TIMESTAMP>
 ---
 
-# Handoff — Brainstorm para planejamento
+# Brainstorm to plan handoff
 
-## Identificação
+## Identification
+- Discovery revision: <DISCOVERY_REVISION>
 
-- Brainstorm revision: <revision>
-- Gerado em: <ISO-8601-with-timezone>
-- Skill produtora: `brainstorm-idea-with-user`
-- Skill consumidora: `create-spec-driven-plan`
+## Summary
+<VALIDATED_DISCOVERY_SUMMARY>
 
-## Resultado consolidado
+## Artifact inventory
+- `discovery/brainstorm/BRAINSTORM.md`
 
-<resultado>
+## Preserved decisions
+- <DECISION_OR_NONE>
 
-## Requisitos candidatos confirmados
+## Allowed open questions
+- <NON_STRUCTURAL_QUESTION_OR_NONE>
 
-- CR-001 — <requisito e origem>
+## Blockers
+- NONE
 
-## Decisões obrigatórias
+## Consumer write scope
+- `plan/`
 
-- DEC-001 — <decisão>
+## Forbidden files
+- `discovery/brainstorm/`
 
-## Decisões delegadas à IA
+## Commands and results
+| Command | Result |
+|---|---|
+| `<VALIDATION_COMMAND>` | NOT_RUN |
 
-- Nenhuma.
-
-## Sugestões rejeitadas
-
-- Nenhuma.
-
-## Suposições ainda ativas
-
-- ASM-001 — <suposição>
-
-## Questões menores que podem ser resolvidas no planejamento
-
-- Nenhuma.
-
-## Questões estruturais
-
-Nenhuma.
-
-## Escopo do MVP
-
-<escopo>
-
-## Visão completa
-
-<visão>
-
-## Fora de escopo
-
-<não objetivos>
-
-## Restrições
-
-<restrições>
-
-## Integrações
-
-<integrações>
-
-## Fontes obrigatórias
-
-- `../SOURCE-REGISTER.md`
-
-## Riscos prioritários
-
-- RISK-001 — <risco>
-
-## Critérios de sucesso
-
-<critérios>
-
-## Instruções para a próxima skill
-
-- Não repetir perguntas respondidas.
-- Preservar IDs.
-- Registrar qualquer nova inferência como `PROPOSAL` ou `INFERRED`.
-- Não transformar sugestões rejeitadas em requisito.
-- Executar planejamento apenas em uma invocação separada.
+## Stop instruction
+Invoke `create-spec-driven-plan` separately. Do not implement.

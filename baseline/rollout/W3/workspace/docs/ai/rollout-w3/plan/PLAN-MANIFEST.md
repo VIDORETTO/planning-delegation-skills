@@ -1,0 +1,3 @@
+# Plan manifest
+
+Profile: compact

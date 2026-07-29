@@ -59,7 +59,7 @@ Conflicts must be recorded in `DECISIONS-RISKS.md`; they must not be silently re
 
 - small: update task/traceability and increment plan revision;
 - structural: `REPLAN_REQUIRED`;
-- product intent: `REBRAINSTORM_REQUIRED`.
+- product intent: return to `DISCOVERY/BRAINSTORM_IN_PROGRESS` with `required_skill: brainstorm-idea-with-user`.
 
 ## Prohibitions
 

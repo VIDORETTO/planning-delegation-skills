@@ -7,8 +7,8 @@ stage: RELEASE
 status: RELEASE_BLOCKED
 stage_owner: validate-release-readiness
 required_skill: validate-release-readiness
-successor_skill: route-ai-work-by-capability
-handoff_status: READY
+successor_skill: NONE
+handoff_status: NOT_READY
 discovery_revision: 1
 plan_revision: 0
 routing_revision: 0

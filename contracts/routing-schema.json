@@ -3,7 +3,7 @@
   "$id": "https://vidoretto.dev/schemas/skill-team/v3/routing.schema.json",
   "title": "skill-team/v3 routing assignment",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": [
     "task_id",
     "executor",
@@ -13,7 +13,11 @@
     "hard_gate",
     "score",
     "confidence",
-    "rationale"
+    "rationale",
+    "locks",
+    "parallel_eligible",
+    "parallel_rationale",
+    "isolation_strategy"
   ],
   "properties": {
     "task_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-\\d{3}$" },
@@ -33,6 +37,9 @@
     "score": { "type": ["integer", "null"], "minimum": 0 },
     "confidence": { "enum": ["HIGH", "MEDIUM", "LOW"] },
     "locks": { "type": "array", "items": { "type": "string" } },
-    "rationale": { "type": "string", "minLength": 1 }
+    "rationale": { "type": "string", "minLength": 1 },
+    "parallel_eligible": { "type": "boolean" },
+    "parallel_rationale": { "type": "string", "minLength": 1 },
+    "isolation_strategy": { "type": "string", "minLength": 1 }
   }
 }

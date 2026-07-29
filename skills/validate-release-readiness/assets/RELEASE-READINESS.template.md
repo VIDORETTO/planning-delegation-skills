@@ -31,9 +31,9 @@ updated_at: <ISO-8601>
 
 ## Accepted risk register
 
-| ID | Gate | Rationale | Owner |
-|---|---|---|---|
-| RISK-001 | <gate> | <rationale> | <owner> |
+| ID | Gate | Rationale | Owner | Expiration or review condition | Non-waivable gate confirmed |
+|---|---|---|---|---|---|
+| RISK-001 | <gate> | <rationale> | <owner> | <date or measurable review condition> | YES \| N/A |
 
 ## Blockers
 
